@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Travel Train: CNX - PHS | Kiki Oracle</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background: #050505;
+            font-family: sans-serif;
+        }
+
+        #info {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            color: #D4AF37;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid rgba(212, 175, 55, 0.5);
+            pointer-events: none;
+            backdrop-filter: blur(5px);
+        }
+
+        #controls {
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 10px;
+        }
+
+        button {
+            background: rgba(212, 175, 55, 0.2);
+            color: #D4AF37;
+            border: 1px solid #D4AF37;
+            padding: 10px 20px;
+            cursor: pointer;
+            border-radius: 20px;
+            backdrop-filter: blur(5px);
+            transition: all 0.3s;
+        }
+
+        button:hover {
+            background: rgba(212, 175, 55, 0.4);
+        }
+
+        .label {
+            font-size: 12px;
+            color: #888;
+            margin-top: 5px;
+        }
+
+        #footer {
+            position: absolute;
+            bottom: 10px;
+            right: 20px;
+            color: #444;
+            font-size: 12px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="info">
+        <div style="font-weight: bold; font-size: 1.2rem;">TRAIN VIEW: CNX &rsaquo; PHS</div>
+        <div id="location">กำลังเตรียมการออกเดินรถ...</div>
+        <div class="label" id="timestamp">--:--:--</div>
+    </div>
+
+    <div id="controls">
+        <button onclick="toggleView()">สลับมุมมอง (Drone / Front)</button>
+        <button onclick="resetTrip()">เริ่มใหม่</button>
+    </div>
+
+    <div id="footer">Created by กีกี้ (Kiki) Oracle</div>
+
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+            "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+        }
+    }
+</script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+        // CSV Data (Waypoints)
+        const rawData = [
+            [18.464717, 99.05675, "Mueang Lamphun", "08:04:17"],
+            [18.456181, 99.057669, "Mueang Lamphun", "08:09:47"],
+            [18.456107, 99.087873, "Mae Tha", "08:14:32"],
+            [18.461019, 99.137354, "Mae Tha", "08:18:36"],
+            [18.392756, 99.265662, "Hang Chat", "09:01:45"],
+            [18.364852, 99.287066, "Hang Chat", "09:07:09"],
+            [18.37956, 99.305078, "Hang Chat", "09:11:23"],
+            [18.312283, 99.413179, "Lampang", "09:22:15"],
+            [18.281088, 99.469882, "Lampang (Station)", "09:27:25"],
+            [18.275846, 99.47753, "Lampang", "09:32:24"],
+            [18.223882, 99.515192, "Lampang", "09:37:48"],
+            [18.240787, 99.596923, "Lampang", "09:48:13"],
+            [18.256232, 99.655373, "Mae Mo", "09:53:39"],
+            [18.264667, 99.709782, "Mae Mo", "09:58:27"],
+            [18.277847, 99.801018, "Mae Mo", "10:06:25"],
+            [18.297822, 99.86354, "Mae Mo", "10:14:25"],
+            [18.211666, 99.871989, "Long, Phrae", "10:29:32"],
+            [18.194947, 99.870168, "Long, Phrae", "10:32:30"],
+            [18.096358, 99.866883, "Long, Phrae", "10:49:41"],
+            [18.080372, 99.879712, "Long, Phrae", "10:59:32"],
+            [18.040347, 99.916938, "Long, Phrae", "11:09:52"],
+            [18.032004, 99.922519, "Long, Phrae", "11:11:34"],
+            [17.97274, 100.052057, "Den Chai", "11:31:00"],
+            [17.92115, 100.062211, "Den Chai", "11:36:34"],
+            [17.881632, 100.040743, "Den Chai", "11:41:39"],
+            [17.839016, 100.046134, "Uttaradit", "11:47:01"],
+            [17.808954, 100.066603, "Uttaradit", "11:51:54"],
+            [17.77201, 100.108, "Uttaradit", "11:57:12"],
+            [17.723428, 100.126752, "Uttaradit", "12:02:22"],
+            [17.652857, 100.122463, "Uttaradit", "12:07:28"],
+            [17.639648, 100.10107, "Uttaradit", "12:12:16"],
+            [16.817458, 100.25806, "Phitsanulok", "16:23:02"]
+        ];
+
+        // Scene Setup
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x050505);
+        scene.fog = new THREE.FogExp2(0x050505, 0.002);
+
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 10000);
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        document.body.appendChild(renderer.domElement);
+
+        const controls = new OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+
+        // Lighting
+        const ambientLight = new THREE.AmbientLight(0x404040, 2);
+        scene.add(ambientLight);
+
+        const directionalLight = new THREE.DirectionalLight(0xD4AF37, 2);
+        directionalLight.position.set(100, 200, 100);
+        scene.add(directionalLight);
+
+        // Convert GPS to 3D Space (Scale/Mercator simplified)
+        const scale = 5000;
+        const centerLat = 17.5;
+        const centerLon = 99.5;
+
+        function gpsToVec3(lat, lon) {
+            return new THREE.Vector3(
+                (lon - centerLon) * Math.cos(centerLat * Math.PI / 180) * scale,
+                0,
+                -(lat - centerLat) * scale
+            );
+        }
+
+        const points = rawData.map(d => gpsToVec3(d[0], d[1]));
+        const curve = new THREE.CatmullRomCurve3(points);
+
+        // Track
+        const tubeGeo = new THREE.TubeGeometry(curve, 200, 0.5, 8, false);
+        const tubeMat = new THREE.MeshPhongMaterial({ color: 0x222222 });
+        const track = new THREE.Mesh(tubeGeo, tubeMat);
+        scene.add(track);
+
+        // Ground Grid
+        const grid = new THREE.GridHelper(20000, 100, 0x111111, 0x111111);
+        scene.add(grid);
+
+        // Train Model (Kiki Special)
+        const trainGroup = new THREE.Group();
+        const bodyGeo = new THREE.BoxGeometry(2, 2, 6);
+        const bodyMat = new THREE.MeshPhongMaterial({ color: 0xD4AF37 });
+        const body = new THREE.Mesh(bodyGeo, bodyMat);
+        trainGroup.add(body);
+
+        const headGeo = new THREE.BoxGeometry(2.1, 1.5, 1);
+        const headMat = new THREE.MeshPhongMaterial({ color: 0x1a1a1a });
+        const head = new THREE.Mesh(headGeo, headMat);
+        head.position.z = 3.5;
+        trainGroup.add(head);
+
+        // Windows / Lights
+        const lightGeo = new THREE.CircleGeometry(0.3, 16);
+        const lightMat = new THREE.MeshBasicMaterial({ color: 0xffff00 });
+        const leftEye = new THREE.Mesh(lightGeo, lightMat);
+        leftEye.position.set(-0.6, 0, 4.01);
+        trainGroup.add(leftEye);
+        const rightEye = leftEye.clone();
+        rightEye.position.x = 0.6;
+        trainGroup.add(rightEye);
+
+        scene.add(trainGroup);
+
+        // Animation variables
+        let progress = 0;
+        const speed = 0.0002;
+        let isFrontView = true;
+
+        window.toggleView = () => { isFrontView = !isFrontView; };
+        window.resetTrip = () => { progress = 0; };
+
+        function updateKikiInfo(index) {
+            const dataPoint = rawData[Math.floor(index * (rawData.length - 1))];
+            document.getElementById('location').innerText = `🚉 ${dataPoint[2]}`;
+            document.getElementById('timestamp').innerText = `เวลา: ${dataPoint[3]}`;
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+
+            progress += speed;
+            if (progress > 1) progress = 0;
+
+            const pos = curve.getPointAt(progress);
+            const lookAtPos = curve.getPointAt(Math.min(progress + 0.001, 1));
+
+            trainGroup.position.copy(pos);
+            trainGroup.lookAt(lookAtPos);
+
+            updateKikiInfo(progress);
+
+            if (isFrontView) {
+                // Front View Camera
+                const camOffset = new THREE.Vector3(0, 1.2, 3.8);
+                camOffset.applyQuaternion(trainGroup.quaternion);
+                camera.position.copy(pos).add(camOffset);
+
+                const camLookAt = new THREE.Vector3(0, 1, 10);
+                camLookAt.applyQuaternion(trainGroup.quaternion);
+                camera.lookAt(pos.clone().add(camLookAt));
+                controls.enabled = false;
+            } else {
+                // Drone View
+                controls.enabled = true;
+                controls.update();
+            }
+
+            renderer.render(scene, camera);
+        }
+
+        animate();
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+    </script>
+</body>
+
+</html>
