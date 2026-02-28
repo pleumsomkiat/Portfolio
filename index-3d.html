@@ -344,6 +344,11 @@
         <button id="viewBtn" onclick="cycleView()">บุคคลที่สาม (Third-Person)</button>
     </div>
 
+    <div id="stun-alert"
+        style="display:none; position:absolute; top:30%; left:50%; transform:translate(-50%, -50%); background:rgba(255,0,0,0.85); color:white; padding:20px 40px; border-radius:15px; font-size:2rem; font-weight:bold; z-index:100; text-align:center; box-shadow:0 0 30px red; border: 3px solid #ff4444; backdrop-filter: blur(10px);">
+        ⚠️ <span id="stun-name"></span> โดนหินถล่มทับ!<br><span style="font-size:1.2rem;">(ดีเลย์ 2 วินาที)</span> ⚠️
+    </div>
+
     <div id="winner-screen">
         <h1 id="win-title">🏆 KIKI GOLD WINS!</h1>
         <p id="win-desc">การแข่งขันสิ้นสุดลง ณ สถานีพิษณุโลก</p>
@@ -447,6 +452,7 @@
 
         const curve1 = new THREE.CatmullRomCurve3(points1);
         const curve2 = new THREE.CatmullRomCurve3(points2);
+        const centerCurve = new THREE.CatmullRomCurve3(basePoints); // For placing center decorations like tunnels
 
         // Build Tracks
         function createTrack(curve) {
@@ -498,6 +504,17 @@
             scene.add(mnt);
         }
 
+        function addTunnel(p, dir) {
+            const geo = new THREE.TorusGeometry(18, 5, 8, 16, Math.PI);
+            const mat = new THREE.MeshStandardMaterial({ color: 0x222222, roughness: 1.0 });
+            const arch = new THREE.Mesh(geo, mat);
+            arch.position.set(p.x, -2, p.z);
+            arch.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), dir);
+            arch.castShadow = true;
+            arch.receiveShadow = true;
+            scene.add(arch);
+        }
+
         // Decorate along the base curve
         const decorPoints = basePoints.length * 300;
         for (let i = 0; i < decorPoints; i++) {
@@ -515,6 +532,20 @@
             if (r > 0.3 && r < 0.6) { // Lampang / Phrae area (mountains)
                 if (Math.random() > 0.95 && dist > 150) addMountain(p.x + dx, p.z + dz, 1 + Math.random());
                 if (Math.random() > 0.8) addTree(p.x + dx, p.z + dz, 2);
+
+                // Spawn Tunnels directly over tracks
+                if (Math.random() > 0.985) {
+                    const tCenter = centerCurve.getPointAt(r);
+                    const tDir = new THREE.Vector3().subVectors(
+                        centerCurve.getPointAt(Math.min(r + 0.001, 1)),
+                        tCenter
+                    ).normalize();
+                    // Create multiple rings for a deep tunnel
+                    for (let j = 0; j < 8; j++) {
+                        let r2 = Math.min(r + j * 0.0005, 1);
+                        addTunnel(centerCurve.getPointAt(r2), tDir);
+                    }
+                }
             } else if (r > 0.8) { // Phitsanulok area (flatter, some trees)
                 if (Math.random() > 0.9) addTree(p.x + dx, p.z + dz, 1.5);
             } else { // Lamphun (trees)
@@ -619,8 +650,8 @@
 
         // Swapped curve1 and curve2 to fix the track positions relative to Left/Right splits
         const trains = [
-            { obj: t1Obj, curve: curve2, prog: 0, speed: 0, domLoc: 'loc1', domSpd: 'spd1', mapDot: 'dot1', name: 'Kiki Gold', color: '#D4AF37' },
-            { obj: t2Obj, curve: curve1, prog: 0, speed: 0, domLoc: 'loc2', domSpd: 'spd2', mapDot: 'dot2', name: 'Ocean Blue', color: '#4682B4' }
+            { obj: t1Obj, curve: curve2, prog: 0, speed: 0, stunTimer: 0, domLoc: 'loc1', domSpd: 'spd1', mapDot: 'dot1', name: 'Kiki Gold', color: '#D4AF37' },
+            { obj: t2Obj, curve: curve1, prog: 0, speed: 0, stunTimer: 0, domLoc: 'loc2', domSpd: 'spd2', mapDot: 'dot2', name: 'Ocean Blue', color: '#4682B4' }
         ];
 
         // Input Handling (Tapping A and L)
@@ -630,14 +661,14 @@
             if (isGameOver) return;
             const k = e.key.toLowerCase();
 
-            // Tap logic
+            // Tap logic (Prevent tap if stunned)
             if (!e.repeat) {
-                if (k === 'a' || k === 'ฟ') {
+                if ((k === 'a' || k === 'ฟ') && trains[0].stunTimer <= 0) {
                     trains[0].speed = Math.min(trains[0].speed + ACCEL_TAP, MAX_SPEED);
                     document.getElementById('keyA').classList.add('pressed');
                     setTimeout(() => document.getElementById('keyA').classList.remove('pressed'), 100);
                 }
-                if (k === 'l' || k === 'ส') {
+                if ((k === 'l' || k === 'ส') && trains[1].stunTimer <= 0) {
                     trains[1].speed = Math.min(trains[1].speed + ACCEL_TAP, MAX_SPEED);
                     document.getElementById('keyL').classList.add('pressed');
                     setTimeout(() => document.getElementById('keyL').classList.remove('pressed'), 100);
@@ -674,8 +705,71 @@
             document.getElementById('winner-screen').style.display = 'block';
         }
 
+        const activeRocks = [];
+
+        function spawnRock(curve, targetProg) {
+            const size = 3 + Math.random() * 4;
+            const geo = new THREE.DodecahedronGeometry(size);
+            const mat = new THREE.MeshStandardMaterial({ color: 0x5a4d41, roughness: 1.0 });
+            const rock = new THREE.Mesh(geo, mat);
+
+            const startP = curve.getPointAt(targetProg);
+            rock.position.set(startP.x, startP.y + 120 + Math.random() * 50, startP.z);
+            rock.castShadow = true;
+            scene.add(rock);
+
+            activeRocks.push({ mesh: rock, phase: 'falling', life: 0 });
+        }
+
+        let stunHideTimeout = null;
+        function showStunText(tName) {
+            const stunEl = document.getElementById('stun-alert');
+            document.getElementById('stun-name').innerText = tName;
+            stunEl.style.display = 'block';
+            if (stunHideTimeout) clearTimeout(stunHideTimeout);
+            stunHideTimeout = setTimeout(() => { stunEl.style.display = 'none'; }, 2000);
+        }
+
         function updatePhysics() {
             if (isGameOver) return;
+
+            // Obstacles: Falling Rocks System
+            for (let i = activeRocks.length - 1; i >= 0; i--) {
+                let rock = activeRocks[i];
+                if (rock.phase === 'falling') {
+                    rock.mesh.position.y -= 2.5; // Fall speed
+                    rock.mesh.rotation.x += 0.1;
+                    rock.mesh.rotation.y += 0.1;
+
+                    if (rock.mesh.position.y <= 2) {
+                        rock.mesh.position.y = 2; // Hit ground
+                        rock.phase = 'landed';
+                        rock.life = 120; // Stay on ground for 2 secs
+                    }
+                } else if (rock.phase === 'landed') {
+                    rock.life--;
+                    if (rock.life <= 0) { rock.phase = 'destroyed'; scene.remove(rock.mesh); }
+                }
+
+                // Collision with Trains
+                if (rock.phase !== 'destroyed') {
+                    trains.forEach(t => {
+                        if (t.stunTimer > 0) return; // already stunned
+
+                        let dist = rock.mesh.position.distanceTo(t.obj.position);
+                        if (dist < 12) {
+                            // HIT! Stun the train for 120 frames (~2 seconds)
+                            t.stunTimer = 120;
+                            t.speed = 0;
+
+                            rock.phase = 'destroyed';
+                            scene.remove(rock.mesh);
+                            showStunText(t.name);
+                        }
+                    });
+                }
+                if (rock.phase === 'destroyed') activeRocks.splice(i, 1);
+            }
 
             // Apply friction (speed decays if not tapped)
             trains[0].speed *= FRICTION;
@@ -683,6 +777,24 @@
 
             // Apply movement & clamping
             trains.forEach((t, i) => {
+                // Rock Spawning in Mountain Region (0.3 to 0.6)
+                if (t.prog > 0.3 && t.prog < 0.6 && Math.random() < 0.015) {
+                    let rProg = Math.min(t.prog + 0.015 + Math.random() * 0.02, 0.99); // Spawn ahead
+                    spawnRock(t.curve, rProg);
+                }
+
+                // Handle Stun State
+                if (t.stunTimer > 0) {
+                    t.stunTimer--;
+                    t.speed = 0; // complete stop
+
+                    // Flash red
+                    if (t.stunTimer % 10 < 5) t.obj.children[0].material.emissive.setHex(0xff0000);
+                    else t.obj.children[0].material.emissive.setHex(0x000000);
+
+                    if (t.stunTimer <= 0) t.obj.children[0].material.emissive.setHex(0x000000);
+                }
+
                 if (t.speed < 0.000001) t.speed = 0; // Full stop
                 t.prog += t.speed;
 
