@@ -231,6 +231,8 @@
 
     <!-- 3D Background -->
     <div id="canvas-container"></div>
+    <div id="labels-container"
+        style="position: absolute; top:0; left:0; width:100%; height:100%; pointer-events: none; z-index: 5;"></div>
 
     <!-- UI Overlay -->
     <div id="ui-layer">
@@ -274,7 +276,6 @@
 
     <div id="global-footer">ENGINEERED BY KIKI ORACLE | OPEN DATA API</div>
 
-    <!-- Three.js Module -->
     <script type="importmap">
         {
             "imports": {
@@ -287,6 +288,7 @@
     <script type="module">
         import * as THREE from 'three';
         import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
 
         // --- 1. THREE.JS ATOM NODE SCENE ---
         const container = document.getElementById('canvas-container');
@@ -301,6 +303,13 @@
         renderer.setSize(window.innerWidth, window.innerHeight);
         renderer.setPixelRatio(window.devicePixelRatio);
         container.appendChild(renderer.domElement);
+
+        const labelRenderer = new CSS2DRenderer();
+        labelRenderer.setSize(window.innerWidth, window.innerHeight);
+        labelRenderer.domElement.style.position = 'absolute';
+        labelRenderer.domElement.style.top = '0px';
+        labelRenderer.domElement.style.pointerEvents = 'none'; // so we can still hover Three.js objects
+        document.body.appendChild(labelRenderer.domElement);
 
         const controls = new OrbitControls(camera, renderer.domElement);
         controls.enableDamping = true;
@@ -359,6 +368,26 @@
             atom.scale.setScalar(atom.userData.baseScale);
             atoms.push(atom);
             networkGroup.add(atom);
+
+            // Create HTML Label
+            const label = document.createElement('div');
+            label.className = 'province-label';
+            label.textContent = thaiProvinces[i].name;
+            label.style.position = 'absolute';
+            label.style.color = '#fff';
+            label.style.fontSize = '9px';
+            label.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
+            label.style.border = '1px solid #00f3ff';
+            label.style.padding = '2px 4px';
+            label.style.borderRadius = '3px';
+            label.style.transform = 'translate(-50%, -50%)';
+            label.style.pointerEvents = 'none';
+            label.style.opacity = '0.4';
+            label.style.transition = 'opacity 0.2s, font-size 0.2s, background-color 0.2s, border-color 0.2s';
+            label.style.display = 'block';
+            document.getElementById('labels-container').appendChild(label);
+
+            atom.userData.label = label;
         }
 
         // Connect Atoms with lines (Molecular structure)
@@ -641,8 +670,82 @@
             if (hoveredAtom) {
                 hoveredAtom.scale.setScalar(hoveredAtom.userData.baseScale);
                 hoveredAtom.material.emissiveIntensity = 1;
+
+                // Reset Label
+                if (hoveredAtom.userData.label) {
+                    hoveredAtom.userData.label.style.opacity = '0.4';
+                    hoveredAtom.userData.label.style.fontSize = '9px';
+                    hoveredAtom.userData.label.style.fontWeight = 'normal';
+                    hoveredAtom.userData.label.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
+                    hoveredAtom.userData.label.style.zIndex = '1';
+                }
+
                 hoveredAtom = null;
             }
+
+            if (intersects.length > 0) {
+                controls.autoRotate = false; // Stop rotation when hovering
+                hoveredAtom = intersects[0].object;
+                hoveredAtom.scale.setScalar(hoveredAtom.userData.baseScale * 2.2);
+                hoveredAtom.material.emissiveIntensity = 3;
+                document.body.style.cursor = 'pointer';
+
+                // Emphasize Label
+                if (hoveredAtom.userData.label) {
+                    hoveredAtom.userData.label.style.opacity = '1';
+                    hoveredAtom.userData.label.style.fontSize = '14px';
+                    hoveredAtom.userData.label.style.fontWeight = 'bold';
+                    hoveredAtom.userData.label.style.backgroundColor = 'rgba(0, 0, 0, 0.9)';
+                    hoveredAtom.userData.label.style.zIndex = '100';
+                    const colorStyle = `#${hoveredAtom.material.color.getHexString()}`;
+                    hoveredAtom.userData.label.style.borderColor = colorStyle;
+                }
+
+                if (selectedProvinceIndex !== hoveredAtom.userData.id) {
+                    selectedProvinceIndex = hoveredAtom.userData.id;
+                    updateDashboardUI(hoveredAtom.userData);
+                }
+            } else {
+                controls.autoRotate = true;
+                document.body.style.cursor = 'default';
+            }
+
+            // Animate individual atoms pulsating slightly and update LABEL POSITIONS
+            const halfWidth = window.innerWidth / 2;
+            const halfHeight = window.innerHeight / 2;
+
+            atoms.forEach(atom => {
+                if (atom !== hoveredAtom) {
+                    const pulse = Math.sin(time * 10 + atom.userData.id) * 0.15;
+                    atom.scale.setScalar(atom.userData.baseScale + pulse);
+                }
+
+                // Map 3D to 2D screen positions for labels
+                if (atom.userData.label) {
+                    const pos = atom.position.clone();
+                    // Apply group transforms correctly by calculating world position
+                    atom.getWorldPosition(pos);
+                    pos.project(camera);
+
+                    // If behind camera, hide
+                    if (pos.z > 1) {
+                        atom.userData.label.style.display = 'none';
+                    } else {
+                        atom.userData.label.style.display = 'block';
+                        const x = (pos.x * halfWidth) + halfWidth;
+                        const y = -(pos.y * halfHeight) + halfHeight;
+                        atom.userData.label.style.left = `${x}px`;
+                        atom.userData.label.style.top = `${y - 15}px`; // slightly above
+
+                        // Z-indexing hack so labels in front are on top
+                        if (atom !== hoveredAtom) {
+                            atom.userData.label.style.zIndex = Math.floor((1 - pos.z) * 100);
+                        }
+                    }
+                }
+            });
+
+            renderer.render(scene, camera);
 
             if (intersects.length > 0) {
                 controls.autoRotate = false; // Stop rotation when hovering
