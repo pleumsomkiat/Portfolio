@@ -4,13 +4,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>3D Travel Train: Dual Control | Kiki Oracle</title>
+    <title>3D Travel Train: Dual Racing Mode | Kiki Oracle</title>
     <style>
         body {
             margin: 0;
             overflow: hidden;
-            background: #87CEEB;
-            font-family: sans-serif;
+            background: #87ceeb;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
 
         /* Information Panel */
@@ -18,14 +18,80 @@
             position: absolute;
             top: 20px;
             left: 20px;
-            color: #333;
-            background: rgba(255, 255, 255, 0.9);
+            color: #222;
+            background: rgba(255, 255, 255, 0.85);
             padding: 15px;
-            border-radius: 8px;
-            border: 1px solid rgba(0, 0, 0, 0.2);
+            border-radius: 12px;
+            border: 2px solid rgba(212, 175, 55, 0.5);
             pointer-events: none;
-            backdrop-filter: blur(5px);
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+            min-width: 280px;
+        }
+
+        .title {
+            font-weight: 900;
+            font-size: 1.4rem;
+            margin-bottom: 5px;
+            color: #111;
+            letter-spacing: 1px;
+        }
+
+        .train-status {
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid #ddd;
+        }
+
+        .train-name {
+            font-weight: bold;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .train-speed {
+            font-family: monospace;
+            font-size: 1.1em;
+            background: #eee;
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+
+        /* Keyboard Instructions */
+        #instructions {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.7);
+            color: #fff;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            text-align: center;
+        }
+
+        .key-btn {
+            display: inline-block;
+            background: linear-gradient(145deg, #444, #222);
+            border: 2px solid #666;
+            color: white;
+            padding: 10px 15px;
+            border-radius: 8px;
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin: 5px;
+            box-shadow: 0 4px 0 #111;
+            transition: all 0.1s ease;
+        }
+
+        .key-btn.pressed {
+            transform: translateY(4px);
+            box-shadow: 0 0 0 #111;
+            background: linear-gradient(145deg, #222, #111);
+            border-color: #D4AF37;
         }
 
         /* Control Panel */
@@ -35,56 +101,37 @@
             left: 50%;
             transform: translateX(-50%);
             display: flex;
-            flex-direction: column;
             gap: 15px;
-            background: rgba(255, 255, 255, 0.85);
+            background: rgba(255, 255, 255, 0.9);
             padding: 15px 25px;
-            border-radius: 12px;
-            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+            border-radius: 30px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
             backdrop-filter: blur(10px);
-            align-items: center;
-        }
-
-        .row {
-            display: flex;
-            gap: 10px;
-            align-items: center;
         }
 
         button {
             background: #fff;
             color: #333;
-            border: 1px solid #aaa;
-            padding: 10px 15px;
+            border: 1px solid #ccc;
+            padding: 10px 20px;
             cursor: pointer;
-            border-radius: 6px;
+            border-radius: 20px;
             transition: all 0.2s;
             font-size: 14px;
             font-weight: bold;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
         }
 
         button:hover {
-            background: #f0f0f0;
-            transform: translateY(-1px);
+            background: #f8f8f8;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
         }
 
         button.active {
-            background: #D4AF37;
+            background: #222;
             color: #fff;
-            border-color: #b5952f;
-        }
-
-        button.active-blue {
-            background: #4682B4;
-            color: #fff;
-            border-color: #315f85;
-        }
-
-        .label {
-            font-size: 12px;
-            color: #555;
-            margin-top: 5px;
+            border-color: #000;
         }
 
         #footer {
@@ -93,18 +140,8 @@
             right: 20px;
             color: #fff;
             font-size: 12px;
-            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
-        }
-
-        .slider-container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            width: 100%;
-        }
-
-        input[type=range] {
-            width: 200px;
+            font-weight: bold;
+            text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.8);
         }
     </style>
 </head>
@@ -112,35 +149,44 @@
 <body>
 
     <div id="info">
-        <div style="font-weight: bold; font-size: 1.2rem;">TRAIN VIEW: CNX &rsaquo; PHS</div>
-        <div id="trainSelectName" style="color: #D4AF37; font-weight: bold; margin-top: 5px;">กำลังติดตาม: ขบวน Kiki
-            Gold</div>
-        <div id="location" style="margin-top: 5px;">กำลังเตรียมการออกเดินรถ...</div>
-        <div class="label" id="timestamp">--:--:--</div>
+        <div class="title">RACING EXPRESS 🛤️</div>
+        <div style="font-size:0.9em; color:#666;">เส้นทาง: เชียงใหม่ ➔ พิษณุโลก</div>
+
+        <div class="train-status">
+            <div class="train-name" style="color: #D4AF37;">
+                <span>🟡 Kiki Gold</span> <span class="train-speed" id="spd1">0 km/h</span>
+            </div>
+            <div style="font-size: 0.85em; margin-top:2px;" id="loc1">พิกัด: --</div>
+        </div>
+
+        <div class="train-status">
+            <div class="train-name" style="color: #4682B4;">
+                <span>🔵 Ocean Blue</span> <span class="train-speed" id="spd2">0 km/h</span>
+            </div>
+            <div style="font-size: 0.85em; margin-top:2px;" id="loc2">พิกัด: --</div>
+        </div>
+    </div>
+
+    <div id="instructions">
+        <div style="font-size: 1.1rem; font-weight: bold; margin-bottom:10px; color:#D4AF37;">แผงควมคุมรถไฟ (Drive
+            Controls)</div>
+        <div>กดปุ่มบนคีย์บอร์ดค้างไว้เพื่อเร่งเครื่อง</div>
+        <div style="display:flex; justify-content:center; align-items:center; margin-top:15px; gap: 20px;">
+            <div style="text-align:center;">
+                <div id="keyA" class="key-btn">A</div>
+                <div style="color:#D4AF37; margin-top:5px; font-weight:bold;">Kiki Gold</div>
+            </div>
+            <div style="text-align:center;">
+                <div id="keyL" class="key-btn">L</div>
+                <div style="color:#4682B4; margin-top:5px; font-weight:bold;">Ocean Blue</div>
+            </div>
+        </div>
     </div>
 
     <div id="controls">
-        <div class="row">
-            <span>ติดตามขบวน:</span>
-            <button id="btnTrain1" class="active" onclick="selectTrain(1)">Kiki Gold (ขบวนทอง)</button>
-            <button id="btnTrain2" onclick="selectTrain(2)">Ocean Express (ขบวนน้ำเงิน)</button>
-        </div>
-
-        <div class="row">
-            <span>มุมกล้อง:</span>
-            <button id="viewBtn" onclick="cycleView()">หน้ารถไฟ (Front)</button>
-        </div>
-
-        <div class="slider-container">
-            <span id="speedLabel">ความเร็วขบวนที่เลือก: เดินหน้าปกติ</span>
-            <div class="row">
-                <button onclick="changeSpeed(-0.0004)">◀◀ ถอยหลังเร็ว</button>
-                <button onclick="changeSpeed(-0.0001)">◀ ถอยช้า</button>
-                <button onclick="changeSpeed(0)">หยุด (Stop)</button>
-                <button onclick="changeSpeed(0.0001)">เดินหน้าช้า ▶</button>
-                <button onclick="changeSpeed(0.0004)">เดินหน้าปกติ ▶▶</button>
-            </div>
-        </div>
+        <span style="font-weight:bold; align-self:center;">มุมกล้อง:</span>
+        <button id="viewBtn" onclick="cycleView()">บุคคลที่สาม (Third-Person)</button>
+        <button id="focusBtn" class="active" onclick="toggleFocus()">ติดตาม: Kiki Gold</button>
     </div>
 
     <div id="footer">Created by กีกี้ (Kiki) Oracle</div>
@@ -158,75 +204,55 @@
         import * as THREE from 'three';
         import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
-        // CSV Data (Waypoints)
+        // GPS Data
         const rawData = [
-            [18.464717, 99.05675, "Mueang Lamphun", "08:04:17"],
-            [18.456181, 99.057669, "Mueang Lamphun", "08:09:47"],
-            [18.456107, 99.087873, "Mae Tha", "08:14:32"],
-            [18.461019, 99.137354, "Mae Tha", "08:18:36"],
-            [18.392756, 99.265662, "Hang Chat", "09:01:45"],
-            [18.364852, 99.287066, "Hang Chat", "09:07:09"],
-            [18.37956, 99.305078, "Hang Chat", "09:11:23"],
-            [18.312283, 99.413179, "Lampang", "09:22:15"],
-            [18.281088, 99.469882, "Lampang (Station)", "09:27:25"],
-            [18.275846, 99.47753, "Lampang", "09:32:24"],
-            [18.223882, 99.515192, "Lampang", "09:37:48"],
-            [18.240787, 99.596923, "Lampang", "09:48:13"],
-            [18.256232, 99.655373, "Mae Mo", "09:53:39"],
-            [18.264667, 99.709782, "Mae Mo", "09:58:27"],
-            [18.277847, 99.801018, "Mae Mo", "10:06:25"],
-            [18.297822, 99.86354, "Mae Mo", "10:14:25"],
-            [18.211666, 99.871989, "Long, Phrae", "10:29:32"],
-            [18.194947, 99.870168, "Long, Phrae", "10:32:30"],
-            [18.096358, 99.866883, "Long, Phrae", "10:49:41"],
-            [18.080372, 99.879712, "Long, Phrae", "10:59:32"],
-            [18.040347, 99.916938, "Long, Phrae", "11:09:52"],
-            [18.032004, 99.922519, "Long, Phrae", "11:11:34"],
-            [17.97274, 100.052057, "Den Chai", "11:31:00"],
-            [17.92115, 100.062211, "Den Chai", "11:36:34"],
-            [17.881632, 100.040743, "Den Chai", "11:41:39"],
-            [17.839016, 100.046134, "Uttaradit", "11:47:01"],
-            [17.808954, 100.066603, "Uttaradit", "11:51:54"],
-            [17.77201, 100.108, "Uttaradit", "11:57:12"],
-            [17.723428, 100.126752, "Uttaradit", "12:02:22"],
-            [17.652857, 100.122463, "Uttaradit", "12:07:28"],
-            [17.639648, 100.10107, "Uttaradit", "12:12:16"],
-            [16.817458, 100.25806, "Phitsanulok", "16:23:02"]
+            [18.464717, 99.05675, "ลำพูน (Lamphun)", "08:04"],
+            [18.461019, 99.137354, "แม่ทะ (Mae Tha)", "08:18"],
+            [18.392756, 99.265662, "ห้างฉัตร (Hang Chat)", "09:01"],
+            [18.312283, 99.413179, "ลำปาง (Lampang)", "09:22"],
+            [18.256232, 99.655373, "แม่เมาะ (Mae Mo)", "09:53"],
+            [18.211666, 99.871989, "ลอง แพร่ (Long, Phrae)", "10:29"],
+            [17.97274, 100.052057, "เด่นชัย (Den Chai)", "11:31"],
+            [17.839016, 100.046134, "อุตรดิตถ์ (Uttaradit)", "11:47"],
+            [17.652857, 100.122463, "อุตรดิตถ์ (Uttaradit)", "12:07"],
+            [16.817458, 100.25806, "พิษณุโลก (Phitsanulok)", "16:23"]
         ];
 
         // Scene Setup
         const scene = new THREE.Scene();
-        scene.background = new THREE.Color(0x87CEEB); // Bright Sky blue
-        scene.fog = new THREE.FogExp2(0x87CEEB, 0.0008); // Lighter fog for better visibility
+        scene.background = new THREE.Color(0xafeeee); // Pale turquoise sky
+        scene.fog = new THREE.FogExp2(0xafeeee, 0.0006);
 
-        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 20000);
-        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
+        const camera = new THREE.PerspectiveCamera(65, window.innerWidth / window.innerHeight, 0.1, 40000);
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
         renderer.setPixelRatio(window.devicePixelRatio);
-        renderer.shadowMap.enabled = true; // Enable shadows
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
         document.body.appendChild(renderer.domElement);
 
         const controls = new OrbitControls(camera, renderer.domElement);
         controls.enableDamping = true;
 
-        // --- ENHANCED DAYLIGHT LIGHTING ---
-        const hemiLight = new THREE.HemisphereLight(0xffffff, 0x444444, 1.2);
+        // Lighting
+        const hemiLight = new THREE.HemisphereLight(0xffffff, 0x446644, 1.0);
         scene.add(hemiLight);
 
-        const dirLight = new THREE.DirectionalLight(0xffffff, 2.0); // Bright sunlight
-        dirLight.position.set(500, 1000, 500);
+        const dirLight = new THREE.DirectionalLight(0xffffff, 1.8);
+        dirLight.position.set(2000, 3000, 2000);
         dirLight.castShadow = true;
-        dirLight.shadow.camera.top = 500;
-        dirLight.shadow.camera.bottom = -500;
-        dirLight.shadow.camera.left = -500;
-        dirLight.shadow.camera.right = 500;
+        dirLight.shadow.mapSize.width = 2048;
+        dirLight.shadow.mapSize.height = 2048;
+        dirLight.shadow.camera.near = 100;
+        dirLight.shadow.camera.far = 10000;
+        dirLight.shadow.camera.left = -2000;
+        dirLight.shadow.camera.right = 2000;
+        dirLight.shadow.camera.top = 2000;
+        dirLight.shadow.camera.bottom = -2000;
         scene.add(dirLight);
 
-        const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
-        scene.add(ambientLight);
-
-        // Convert GPS to 3D Space (Scale/Mercator simplified)
-        const scale = 5000;
+        // Coordinate Conversion
+        const scale = 8000; // Increased scale for more impressive views
         const centerLat = 17.5;
         const centerLon = 99.5;
 
@@ -238,211 +264,273 @@
             );
         }
 
-        const points = rawData.map(d => gpsToVec3(d[0], d[1]));
-        const curve = new THREE.CatmullRomCurve3(points);
+        const basePoints = rawData.map(d => gpsToVec3(d[0], d[1]));
 
-        // Track
-        const tubeGeo = new THREE.TubeGeometry(curve, 300, 1.8, 8, false);
-        const tubeMat = new THREE.MeshPhongMaterial({ color: 0x666666, shininess: 10 });
-        const track = new THREE.Mesh(tubeGeo, tubeMat);
-        track.receiveShadow = true;
-        scene.add(track);
+        // Create Two Parallel Curves (shifted by local X)
+        const points1 = [];
+        const points2 = [];
+        const offsetDist = 5; // Distance between tracks
 
-        // Ground Plane (Daytime Green Terrain)
-        const planeGeo = new THREE.PlaneGeometry(80000, 80000);
-        const planeMat = new THREE.MeshPhongMaterial({ color: 0x4CAF50 }); // Grass green
+        for (let i = 0; i < basePoints.length; i++) {
+            let p = basePoints[i];
+            let pPrev = i > 0 ? basePoints[i - 1] : p;
+            let pNext = i < basePoints.length - 1 ? basePoints[i + 1] : p;
+
+            let dir = new THREE.Vector3().subVectors(pNext, pPrev).normalize();
+            if (dir.lengthSq() === 0) dir.set(0, 0, 1);
+            let right = new THREE.Vector3(dir.z, 0, -dir.x).normalize(); // Perpendicular
+
+            points1.push(p.clone().add(right.clone().multiplyScalar(-offsetDist)));
+            points2.push(p.clone().add(right.clone().multiplyScalar(offsetDist)));
+        }
+
+        const curve1 = new THREE.CatmullRomCurve3(points1);
+        const curve2 = new THREE.CatmullRomCurve3(points2);
+
+        // Build Tracks
+        function createTrack(curve) {
+            const tubeGeo = new THREE.TubeGeometry(curve, 500, 1.5, 8, false);
+            const tubeMat = new THREE.MeshStandardMaterial({ color: 0x555555, roughness: 0.6, metalness: 0.2 });
+            const track = new THREE.Mesh(tubeGeo, tubeMat);
+            track.receiveShadow = true;
+            scene.add(track);
+            return tubeGeo;
+        }
+
+        createTrack(curve1);
+        createTrack(curve2);
+
+        // --- PROCEDURAL SCENERY ---
+        // Ground
+        const planeGeo = new THREE.PlaneGeometry(150000, 150000);
+        const planeMat = new THREE.MeshStandardMaterial({ color: 0x4CAF50, roughness: 1.0 });
         const plane = new THREE.Mesh(planeGeo, planeMat);
         plane.rotation.x = -Math.PI / 2;
         plane.position.y = -2;
         plane.receiveShadow = true;
         scene.add(plane);
 
-        // Grid over ground
-        const grid = new THREE.GridHelper(80000, 400, 0x388E3C, 0x388E3C);
-        grid.position.y = -1.9;
-        scene.add(grid);
+        // Helper functions for decorations
+        function addTree(x, z, scaleMult) {
+            const h = (8 + Math.random() * 10) * scaleMult;
+            const w = (4 + Math.random() * 4) * scaleMult;
+            const geo = new THREE.ConeGeometry(w, h, 6);
+            const color = new THREE.Color().setHSL(0.33 + Math.random() * 0.1, 0.6 + Math.random() * 0.4, 0.3 + Math.random() * 0.2);
+            const mat = new THREE.MeshStandardMaterial({ color: color, roughness: 0.9 });
+            const tree = new THREE.Mesh(geo, mat);
+            tree.position.set(x, h / 2 - 2, z);
+            tree.castShadow = true;
+            tree.receiveShadow = true;
+            scene.add(tree);
+        }
 
-        // Train Creation Factory
-        function createTrain(mainColor, cabinColor, eyeColor) {
+        function addMountain(x, z, scaleMult) {
+            const h = (100 + Math.random() * 300) * scaleMult;
+            const w = (100 + Math.random() * 200) * scaleMult;
+            const geo = new THREE.ConeGeometry(w, h, 4);
+            geo.rotateY(Math.random() * Math.PI);
+            const mat = new THREE.MeshStandardMaterial({ color: 0x445544, roughness: 1 });
+            const mnt = new THREE.Mesh(geo, mat);
+            mnt.position.set(x, h / 2 - 2, z);
+            mnt.castShadow = true;
+            mnt.receiveShadow = true;
+            scene.add(mnt);
+        }
+
+        // Decorate along the base curve
+        const decorPoints = basePoints.length * 300;
+        for (let i = 0; i < decorPoints; i++) {
+            const r = Math.random();
+            const p = curve1.getPointAt(r);
+
+            // Offset randomly from track
+            const angle = Math.random() * Math.PI * 2;
+            const dist = 30 + Math.random() * 800; // Keep away from track (min 30)
+
+            const dx = Math.cos(angle) * dist;
+            const dz = Math.sin(angle) * dist;
+
+            // Ascertain region by 'r' (0 to 1)
+            if (r > 0.3 && r < 0.6) { // Lampang / Phrae area (mountains)
+                if (Math.random() > 0.95 && dist > 150) addMountain(p.x + dx, p.z + dz, 1 + Math.random());
+                if (Math.random() > 0.8) addTree(p.x + dx, p.z + dz, 2);
+            } else if (r > 0.8) { // Phitsanulok area (flatter, some trees)
+                if (Math.random() > 0.9) addTree(p.x + dx, p.z + dz, 1.5);
+            } else { // Lamphun (trees)
+                if (Math.random() > 0.7) addTree(p.x + dx, p.z + dz, 1);
+            }
+        }
+
+        // --- TRAIN CREATION ---
+        function createTrain(mainColor) {
             const group = new THREE.Group();
 
-            // Main Body
-            const bodyGeo = new THREE.BoxGeometry(4.5, 5, 15);
-            const bodyMat = new THREE.MeshPhongMaterial({ color: mainColor, shininess: 80 });
+            // Main Engine Body (Larger!)
+            const bodyGeo = new THREE.BoxGeometry(5, 7, 20);
+            const bodyMat = new THREE.MeshStandardMaterial({ color: mainColor, metalness: 0.3, roughness: 0.4 });
             const body = new THREE.Mesh(bodyGeo, bodyMat);
-            body.position.y = 2.5;
+            body.position.y = 3.5;
             body.castShadow = true;
             group.add(body);
 
-            // Driver's Cabin
-            const headGeo = new THREE.BoxGeometry(4.7, 4.5, 4);
-            const headMat = new THREE.MeshPhongMaterial({ color: cabinColor });
+            // Cabin
+            const headGeo = new THREE.BoxGeometry(5.2, 5, 5);
+            const headMat = new THREE.MeshStandardMaterial({ color: 0x111111 });
             const head = new THREE.Mesh(headGeo, headMat);
-            head.position.y = 3.5;
-            head.position.z = 7.5;
+            head.position.set(0, 5, 10);
             head.castShadow = true;
             group.add(head);
 
-            // Windows / Front Lights
-            const lightGeo = new THREE.CircleGeometry(0.8, 16);
-            const lightMat = new THREE.MeshBasicMaterial({ color: eyeColor });
+            // Headlights
+            const lightGeo = new THREE.CircleGeometry(1.2, 32);
+            const lightMat = new THREE.MeshBasicMaterial({ color: 0xffffcc });
             const leftEye = new THREE.Mesh(lightGeo, lightMat);
-            leftEye.position.set(-1.4, 3.0, 9.51);
+            leftEye.position.set(-1.6, 3, 12.51);
             group.add(leftEye);
             const rightEye = leftEye.clone();
-            rightEye.position.x = 1.4;
+            rightEye.position.x = 1.6;
             group.add(rightEye);
 
-            // Back tail light
-            const tailLightGeo = new THREE.CircleGeometry(0.6, 16);
-            const tailLightMat = new THREE.MeshBasicMaterial({ color: 0xff0000 });
-            const tailLight = new THREE.Mesh(tailLightGeo, tailLightMat);
-            tailLight.rotation.y = Math.PI;
-            tailLight.position.set(0, 2.5, -7.51);
-            group.add(tailLight);
+            // Light Beams (SpotLight)
+            const spotLight = new THREE.SpotLight(0xffffff, 5);
+            spotLight.position.set(0, 3, 13);
+            spotLight.target.position.set(0, 3, 100);
+            spotLight.angle = Math.PI / 6;
+            spotLight.penumbra = 0.5;
+            spotLight.distance = 400;
+            spotLight.castShadow = true;
+            group.add(spotLight);
+            group.add(spotLight.target);
 
             return group;
         }
 
-        // Create Trains
-        const train1 = createTrain(0xD4AF37, 0x1a1a1a, 0xffff00); // Kiki Gold
-        scene.add(train1);
+        const t1Obj = createTrain(0xD4AF37); // Gold
+        const t2Obj = createTrain(0x2266aa); // Blue
+        scene.add(t1Obj);
+        scene.add(t2Obj);
 
-        const train2 = createTrain(0x4682B4, 0xeeeeee, 0x00ffff); // Ocean Blue
-        scene.add(train2);
-
-        // Train States
+        // Train Data Structure
         const trains = [
-            { obj: train1, progress: 0.0, speed: 0.0004, name: "Kiki Gold (ขบวนทอง)", color: "#D4AF37" },
-            { obj: train2, progress: 0.05, speed: 0.0004, name: "Ocean Express (ขบวนน้ำเงิน)", color: "#4682B4" } // Starts a bit ahead
+            { obj: t1Obj, curve: curve1, prog: 0, speed: 0, maxSpeed: 0.0006, accel: 0.000005, friction: 0.98, domLoc: 'loc1', domSpd: 'spd1', name: 'Kiki Gold' },
+            { obj: t2Obj, curve: curve2, prog: 0, speed: 0, maxSpeed: 0.0006, accel: 0.000005, friction: 0.98, domLoc: 'loc2', domSpd: 'spd2', name: 'Ocean Blue' }
         ];
 
-        let activeTrainIndex = 0; // Default follow Train 1
+        // Input Handling (A and L keys)
+        const keys = { a: false, l: false };
 
-        // View States
-        let viewModes = ['front', 'third', 'drone'];
-        let currentViewIndex = 0;
+        window.addEventListener('keydown', (e) => {
+            const k = e.key.toLowerCase();
+            if (k === 'a' || k === 'ฟ') { keys.a = true; document.getElementById('keyA').classList.add('pressed'); }
+            if (k === 'l' || k === 'ส') { keys.l = true; document.getElementById('keyL').classList.add('pressed'); }
+        });
 
-        // --- UI CONTROLS EXPOSED TO WINDOW ---
+        window.addEventListener('keyup', (e) => {
+            const k = e.key.toLowerCase();
+            if (k === 'a' || k === 'ฟ') { keys.a = false; document.getElementById('keyA').classList.remove('pressed'); }
+            if (k === 'l' || k === 'ส') { keys.l = false; document.getElementById('keyL').classList.remove('pressed'); }
+        });
+
+        // View State
+        const views = ['third', 'front', 'drone'];
+        let vIdx = 0;
+        let focusIdx = 0; // 0 = Train 1, 1 = Train 2
+
         window.cycleView = () => {
-            currentViewIndex = (currentViewIndex + 1) % viewModes.length;
-            const mode = viewModes[currentViewIndex];
-            let modeName = "หน้ารถไฟ (Front)";
-            if (mode === 'third') modeName = "บุคคลที่สาม (Third-Person)";
-            if (mode === 'drone') modeName = "โดรน (Drone/Orbit)";
-            document.getElementById('viewBtn').innerText = `${modeName}`;
+            vIdx = (vIdx + 1) % views.length;
+            const maps = { 'third': 'บุคคลที่สาม (Third-Person)', 'front': 'หน้ารถไฟ (First-Person)', 'drone': 'โดรนอิสระ (Drone)' };
+            document.getElementById('viewBtn').innerText = maps[views[vIdx]];
         };
 
-        window.selectTrain = (id) => {
-            activeTrainIndex = id - 1;
-            document.getElementById('btnTrain1').className = (id === 1) ? 'active' : '';
-            document.getElementById('btnTrain2').className = (id === 2) ? 'active-blue' : '';
-
-            const t = trains[activeTrainIndex];
-            document.getElementById('trainSelectName').innerText = `กำลังติดตาม: ขบวน ${t.name}`;
-            document.getElementById('trainSelectName').style.color = t.color;
-
-            updateSpeedUI();
+        window.toggleFocus = () => {
+            focusIdx = (focusIdx === 0) ? 1 : 0;
+            const btn = document.getElementById('focusBtn');
+            btn.innerText = `ติดตาม: ${trains[focusIdx].name}`;
+            btn.style.color = focusIdx === 0 ? '#D4AF37' : '#4682B4';
         };
 
-        window.changeSpeed = (newSpeed) => {
-            trains[activeTrainIndex].speed = newSpeed;
-            updateSpeedUI();
-        };
+        function updatePhysics() {
+            // Train 1 Acceleration via 'A'
+            if (keys.a) trains[0].speed = Math.min(trains[0].speed + trains[0].accel, trains[0].maxSpeed);
+            else trains[0].speed *= trains[0].friction;
 
-        window.resetTrip = () => {
-            trains.forEach(t => t.progress = 0);
-        };
+            // Train 2 Acceleration via 'L'
+            if (keys.l) trains[1].speed = Math.min(trains[1].speed + trains[1].accel, trains[1].maxSpeed);
+            else trains[1].speed *= trains[1].friction;
 
-        function updateSpeedUI() {
-            const spd = trains[activeTrainIndex].speed;
-            let lbl = "หยุด (Stop)";
-            if (spd > 0.0002) lbl = "เดินหน้าปกติ ▶▶";
-            else if (spd > 0) lbl = "เดินหน้าช้า ▶";
-            else if (spd < -0.0002) lbl = "◀◀ ถอยหลังเร็ว";
-            else if (spd < 0) lbl = "◀ ถอยช้า";
+            // Apply movement & clamping
+            trains.forEach((t, i) => {
+                if (t.speed < 0.000001) t.speed = 0; // Full stop
+                t.prog += t.speed;
+                if (t.prog >= 1) { t.prog = 1; t.speed = 0; }
 
-            document.getElementById('speedLabel').innerText = `ความเร็วขบวนที่เลือก: ${lbl}`;
-        }
+                // Physics Update Position
+                let safeProg = Math.max(0, Math.min(t.prog, 0.999));
+                let p = t.curve.getPointAt(safeProg);
+                let pLook = t.curve.getPointAt(Math.min(safeProg + 0.001, 1));
 
-        // Info Panel Update
-        function updateInfoPanel() {
-            const t = trains[activeTrainIndex];
-            let prog = t.progress;
-            if (prog < 0) prog = 0;
-            if (prog >= 1) prog = 0.999;
+                t.obj.position.copy(p);
+                t.obj.lookAt(pLook);
 
-            const dataPoint = rawData[Math.floor(prog * (rawData.length - 1))];
-            document.getElementById('location').innerText = `📍 ${dataPoint[2]}`;
-            document.getElementById('timestamp').innerText = `เวลา: ${dataPoint[3]}`;
-        }
-
-        // Animation Loop
-        function animate() {
-            requestAnimationFrame(animate);
-
-            // Update all trains
-            trains.forEach(t => {
-                t.progress += t.speed;
-                if (t.progress > 1) t.progress = 1; // Stop at end
-                if (t.progress < 0) t.progress = 0; // Stop at start
-
-                // Prevent exact 1 for getPointAt to avoid errors
-                const safeProg = Math.min(Math.max(t.progress, 0), 0.999);
-                const pos = curve.getPointAt(safeProg);
-                const lookAtPos = curve.getPointAt(Math.min(safeProg + 0.001, 1));
-
-                t.obj.position.copy(pos);
-                t.obj.lookAt(lookAtPos);
+                // Update DOM UI
+                let dataPoint = rawData[Math.floor(safeProg * (rawData.length - 1))];
+                document.getElementById(t.domLoc).innerHTML = `พิกัด <b style="color:#000">${dataPoint[2]}</b> 🕒 ${dataPoint[3]}`;
+                // Convert generic speed to fake km/h display (speed*100000)
+                const kph = Math.floor(t.speed * 280000);
+                document.getElementById(t.domSpd).innerText = `${kph} km/h`;
             });
+        }
 
-            // Camera Logic (Follows active train)
-            const activeTrain = trains[activeTrainIndex];
-            const safeProg = Math.min(Math.max(activeTrain.progress, 0), 0.999);
-            const pos = curve.getPointAt(safeProg);
-            const mode = viewModes[currentViewIndex];
+        function updateCamera() {
+            const mode = views[vIdx];
+            const focusTrain = trains[focusIdx];
+            const p = focusTrain.obj.position;
+            const q = focusTrain.obj.quaternion;
 
-            updateInfoPanel();
+            if (mode === 'third') {
+                // High dynamic trailing camera
+                let targetOffset = new THREE.Vector3(0, 20, -60);
 
-            if (mode === 'front') {
-                // Driver view
-                const camOffset = new THREE.Vector3(0, 5, 8);
-                camOffset.applyQuaternion(activeTrain.obj.quaternion);
-                camera.position.copy(pos).add(camOffset);
+                // If going fast, pull camera back slightly for effect
+                const speedFactor = (focusTrain.speed / focusTrain.maxSpeed);
+                targetOffset.z -= speedFactor * 20;
 
-                const camLookAt = new THREE.Vector3(0, 2, 80);
-                camLookAt.applyQuaternion(activeTrain.obj.quaternion);
-                camera.lookAt(pos.clone().add(camLookAt));
-                controls.enabled = false;
+                targetOffset.applyQuaternion(q);
 
-            } else if (mode === 'third') {
-                // Smooth Third Person View
-                const camOffset = new THREE.Vector3(0, 15, -45); // High and back
-                camOffset.applyQuaternion(activeTrain.obj.quaternion);
+                camera.position.lerp(p.clone().add(targetOffset), 0.05);
 
-                camera.position.lerp(pos.clone().add(camOffset), 0.1);
+                let lookOffset = new THREE.Vector3(0, 15, 100);
+                lookOffset.applyQuaternion(q);
 
-                const camLookAt = new THREE.Vector3(0, 10, 30); // Look at train body + ahead
-                camLookAt.applyQuaternion(activeTrain.obj.quaternion);
-
-                // Smooth lookat
-                const currentLook = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion);
-                const targetLook = pos.clone().add(camLookAt).sub(camera.position).normalize();
-                currentLook.lerp(targetLook, 0.1);
+                let currentLook = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion);
+                let targetLook = p.clone().add(lookOffset).sub(camera.position).normalize();
+                currentLook.lerp(targetLook, 0.05);
                 camera.lookAt(camera.position.clone().add(currentLook));
-
                 controls.enabled = false;
 
-            } else {
-                // Drone Orbit View
-                controls.target.copy(activeTrain.obj.position);
+            } else if (mode === 'front') {
+                let camOffset = new THREE.Vector3(0, 6, 10); // Sit on nose
+                camOffset.applyQuaternion(q);
+                camera.position.copy(p).add(camOffset);
+
+                let lookOffset = new THREE.Vector3(0, 3, 200);
+                lookOffset.applyQuaternion(q);
+                camera.lookAt(p.clone().add(lookOffset));
+                controls.enabled = false;
+
+            } else if (mode === 'drone') {
+                controls.target.copy(p);
                 controls.enabled = true;
                 controls.update();
             }
-
-            renderer.render(scene, camera);
         }
 
+        function animate() {
+            requestAnimationFrame(animate);
+            updatePhysics();
+            updateCamera();
+            renderer.render(scene, camera);
+        }
         animate();
 
         window.addEventListener('resize', () => {
@@ -450,7 +538,6 @@
             camera.updateProjectionMatrix();
             renderer.setSize(window.innerWidth, window.innerHeight);
         });
-
     </script>
 </body>
 
