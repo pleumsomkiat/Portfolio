@@ -94,6 +94,65 @@
             border-color: #D4AF37;
         }
 
+        /* Minimap / Progress */
+        #ui-top-right {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        #instructions {
+            background: rgba(0, 0, 0, 0.7);
+            color: #fff;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            text-align: center;
+        }
+
+        #minimap {
+            background: rgba(0, 0, 0, 0.7);
+            padding: 15px;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(8px);
+            width: 250px;
+        }
+
+        .map-title {
+            color: #fff;
+            font-weight: bold;
+            margin-bottom: 10px;
+            text-align: center;
+            font-size: 0.9em;
+        }
+
+        .track-bg {
+            width: 100%;
+            height: 10px;
+            background: #333;
+            border-radius: 5px;
+            position: relative;
+            margin-bottom: 15px;
+            overflow: hidden;
+        }
+
+        .train-dot {
+            position: absolute;
+            top: -3px;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            border: 2px solid white;
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.8);
+            transition: left 0.1s linear;
+        }
+
         /* Control Panel */
         #controls {
             position: absolute;
@@ -143,6 +202,50 @@
             font-weight: bold;
             text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.8);
         }
+
+        /* Winner Popup */
+        #winner-screen {
+            display: none;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.9);
+            color: #fff;
+            padding: 40px 60px;
+            border-radius: 20px;
+            border: 3px solid #D4AF37;
+            text-align: center;
+            box-shadow: 0 0 50px rgba(212, 175, 55, 0.5);
+            z-index: 1000;
+        }
+
+        #winner-screen h1 {
+            margin: 0 0 10px 0;
+            font-size: 3rem;
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+        }
+
+        #winner-screen p {
+            font-size: 1.2rem;
+            margin-bottom: 30px;
+        }
+
+        .btn-restart {
+            font-size: 1.2rem;
+            padding: 15px 30px;
+            background: #D4AF37;
+            color: #000;
+            border: none;
+            border-radius: 30px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .btn-restart:hover {
+            background: #e5c158;
+            transform: scale(1.05);
+        }
     </style>
 </head>
 
@@ -150,35 +253,53 @@
 
     <div id="info">
         <div class="title">RACING EXPRESS 🛤️</div>
-        <div style="font-size:0.9em; color:#666;">เส้นทาง: เชียงใหม่ ➔ พิษณุโลก</div>
+        <div style="font-size:0.9em; color:#666;">เส้นทาง: เชียงใหม่ ➔ พิษณุโลก (300 km)</div>
 
         <div class="train-status">
             <div class="train-name" style="color: #D4AF37;">
                 <span>🟡 Kiki Gold</span> <span class="train-speed" id="spd1">0 km/h</span>
             </div>
-            <div style="font-size: 0.85em; margin-top:2px;" id="loc1">พิกัด: --</div>
+            <div style="font-size: 0.85em; margin-top:2px;" id="loc1">ระยะทาง: 0 km</div>
         </div>
 
         <div class="train-status">
             <div class="train-name" style="color: #4682B4;">
                 <span>🔵 Ocean Blue</span> <span class="train-speed" id="spd2">0 km/h</span>
             </div>
-            <div style="font-size: 0.85em; margin-top:2px;" id="loc2">พิกัด: --</div>
+            <div style="font-size: 0.85em; margin-top:2px;" id="loc2">ระยะทาง: 0 km</div>
         </div>
     </div>
 
-    <div id="instructions">
-        <div style="font-size: 1.1rem; font-weight: bold; margin-bottom:10px; color:#D4AF37;">แผงควมคุมรถไฟ (Drive
-            Controls)</div>
-        <div>กดปุ่มบนคีย์บอร์ดค้างไว้เพื่อเร่งเครื่อง</div>
-        <div style="display:flex; justify-content:center; align-items:center; margin-top:15px; gap: 20px;">
-            <div style="text-align:center;">
-                <div id="keyA" class="key-btn">A</div>
-                <div style="color:#D4AF37; margin-top:5px; font-weight:bold;">Kiki Gold</div>
+    <div id="ui-top-right">
+        <div id="minimap">
+            <div class="map-title">แผนที่เส้นทาง (0 - 300km)</div>
+            <div style="position:relative;">
+                <div class="track-bg" id="trackBg1">
+                    <div class="train-dot" id="dot1" style="background:#D4AF37; left: 0%;"></div>
+                </div>
+                <div class="track-bg" id="trackBg2">
+                    <div class="train-dot" id="dot2" style="background:#4682B4; left: 0%;"></div>
+                </div>
+                <!-- Finish Line Marker -->
+                <div
+                    style="position:absolute; right:0; top:-10px; bottom:-10px; width:2px; background:red; z-index:10;">
+                </div>
             </div>
-            <div style="text-align:center;">
-                <div id="keyL" class="key-btn">L</div>
-                <div style="color:#4682B4; margin-top:5px; font-weight:bold;">Ocean Blue</div>
+        </div>
+
+        <div id="instructions">
+            <div style="font-size: 1.1rem; font-weight: bold; margin-bottom:10px; color:#D4AF37;">แผงควมคุมรถไฟ (Drive
+                Controls)</div>
+            <div>รัวปุ่มบนคีย์บอร์ดเพื่อเร่งเครื่อง!</div>
+            <div style="display:flex; justify-content:center; align-items:center; margin-top:15px; gap: 20px;">
+                <div style="text-align:center;">
+                    <div id="keyA" class="key-btn">A</div>
+                    <div style="color:#D4AF37; margin-top:5px; font-weight:bold;">Kiki Gold</div>
+                </div>
+                <div style="text-align:center;">
+                    <div id="keyL" class="key-btn">L</div>
+                    <div style="color:#4682B4; margin-top:5px; font-weight:bold;">Ocean Blue</div>
+                </div>
             </div>
         </div>
     </div>
@@ -187,6 +308,12 @@
         <span style="font-weight:bold; align-self:center;">มุมกล้อง:</span>
         <button id="viewBtn" onclick="cycleView()">บุคคลที่สาม (Third-Person)</button>
         <button id="focusBtn" class="active" onclick="toggleFocus()">ติดตาม: Kiki Gold</button>
+    </div>
+
+    <div id="winner-screen">
+        <h1 id="win-title">🏆 KIKI GOLD WINS!</h1>
+        <p id="win-desc">การแข่งขันสิ้นสุดลง ณ สถานีพิษณุโลก</p>
+        <button class="btn-restart" onclick="restartRace()">แข่งใหม่อีกครั้ง</button>
     </div>
 
     <div id="footer">Created by กีกี้ (Kiki) Oracle</div>
@@ -361,6 +488,46 @@
             }
         }
 
+        // --- FINISH LINE ---
+        const finishPos = basePoints[basePoints.length - 1]; // Phitsanulok
+        const finishGroup = new THREE.Group();
+
+        const archMat = new THREE.MeshStandardMaterial({ color: 0xff0000 });
+        const pillarGeo = new THREE.CylinderGeometry(2, 2, 60);
+        const p1 = new THREE.Mesh(pillarGeo, archMat);
+        p1.position.set(-20, 30, 0);
+        const p2 = new THREE.Mesh(pillarGeo, archMat);
+        p2.position.set(20, 30, 0);
+        const topGeo = new THREE.BoxGeometry(45, 5, 2);
+        const top = new THREE.Mesh(topGeo, archMat);
+        top.position.set(0, 60, 0);
+
+        // Checkered banner
+        const canvas = document.createElement('canvas');
+        canvas.width = 128; canvas.height = 32;
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = 'white'; ctx.fillRect(0, 0, 128, 32);
+        ctx.fillStyle = 'black';
+        for (let x = 0; x < 4; x++) {
+            for (let y = 0; y < 2; y++) {
+                if ((x + y) % 2 === 0) ctx.fillRect(x * 32, y * 16, 32, 16);
+            }
+        }
+        const tex = new THREE.CanvasTexture(canvas);
+        const bannerGeo = new THREE.PlaneGeometry(45, 10);
+        const bannerMat = new THREE.MeshBasicMaterial({ map: tex, side: THREE.DoubleSide });
+        const banner = new THREE.Mesh(bannerGeo, bannerMat);
+        banner.position.set(0, 52, 1.1);
+
+        finishGroup.add(p1); finishGroup.add(p2); finishGroup.add(top); finishGroup.add(banner);
+
+        // Align finish line
+        let preFinish = basePoints[basePoints.length - 2];
+        let finishDir = new THREE.Vector3().subVectors(finishPos, preFinish).normalize();
+        finishGroup.position.copy(finishPos);
+        finishGroup.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), finishDir);
+        scene.add(finishGroup);
+
         // --- TRAIN CREATION ---
         function createTrain(mainColor) {
             const group = new THREE.Group();
@@ -411,24 +578,36 @@
         scene.add(t2Obj);
 
         // Train Data Structure
+        const MAX_SPEED = 0.001;
+        const ACCEL_TAP = 0.00008;
+        const FRICTION = 0.985;
+        const TOTAL_DISTANCE_KM = 300;
+
         const trains = [
-            { obj: t1Obj, curve: curve1, prog: 0, speed: 0, maxSpeed: 0.0006, accel: 0.000005, friction: 0.98, domLoc: 'loc1', domSpd: 'spd1', name: 'Kiki Gold' },
-            { obj: t2Obj, curve: curve2, prog: 0, speed: 0, maxSpeed: 0.0006, accel: 0.000005, friction: 0.98, domLoc: 'loc2', domSpd: 'spd2', name: 'Ocean Blue' }
+            { obj: t1Obj, curve: curve1, prog: 0, speed: 0, domLoc: 'loc1', domSpd: 'spd1', mapDot: 'dot1', name: 'Kiki Gold', color: '#D4AF37' },
+            { obj: t2Obj, curve: curve2, prog: 0, speed: 0, domLoc: 'loc2', domSpd: 'spd2', mapDot: 'dot2', name: 'Ocean Blue', color: '#4682B4' }
         ];
 
-        // Input Handling (A and L keys)
-        const keys = { a: false, l: false };
+        // Input Handling (Tapping A and L)
+        let isGameOver = false;
 
         window.addEventListener('keydown', (e) => {
+            if (isGameOver) return;
             const k = e.key.toLowerCase();
-            if (k === 'a' || k === 'ฟ') { keys.a = true; document.getElementById('keyA').classList.add('pressed'); }
-            if (k === 'l' || k === 'ส') { keys.l = true; document.getElementById('keyL').classList.add('pressed'); }
-        });
 
-        window.addEventListener('keyup', (e) => {
-            const k = e.key.toLowerCase();
-            if (k === 'a' || k === 'ฟ') { keys.a = false; document.getElementById('keyA').classList.remove('pressed'); }
-            if (k === 'l' || k === 'ส') { keys.l = false; document.getElementById('keyL').classList.remove('pressed'); }
+            // Tap logic
+            if (!e.repeat) {
+                if (k === 'a' || k === 'ฟ') {
+                    trains[0].speed = Math.min(trains[0].speed + ACCEL_TAP, MAX_SPEED);
+                    document.getElementById('keyA').classList.add('pressed');
+                    setTimeout(() => document.getElementById('keyA').classList.remove('pressed'), 100);
+                }
+                if (k === 'l' || k === 'ส') {
+                    trains[1].speed = Math.min(trains[1].speed + ACCEL_TAP, MAX_SPEED);
+                    document.getElementById('keyL').classList.add('pressed');
+                    setTimeout(() => document.getElementById('keyL').classList.remove('pressed'), 100);
+                }
+            }
         });
 
         // View State
@@ -449,20 +628,42 @@
             btn.style.color = focusIdx === 0 ? '#D4AF37' : '#4682B4';
         };
 
-        function updatePhysics() {
-            // Train 1 Acceleration via 'A'
-            if (keys.a) trains[0].speed = Math.min(trains[0].speed + trains[0].accel, trains[0].maxSpeed);
-            else trains[0].speed *= trains[0].friction;
+        window.restartRace = () => {
+            trains.forEach(t => { t.prog = 0; t.speed = 0; });
+            isGameOver = false;
+            document.getElementById('winner-screen').style.display = 'none';
+        };
 
-            // Train 2 Acceleration via 'L'
-            if (keys.l) trains[1].speed = Math.min(trains[1].speed + trains[1].accel, trains[1].maxSpeed);
-            else trains[1].speed *= trains[1].friction;
+        function declareWinner(winnerIndex) {
+            if (isGameOver) return;
+            isGameOver = true;
+            const w = trains[winnerIndex];
+
+            document.getElementById('win-title').innerText = `🏆 ${w.name.toUpperCase()} WINS!`;
+            document.getElementById('win-title').style.color = w.color;
+
+            const loc = rawData[rawData.length - 1][2]; // Real end location name
+            document.getElementById('win-desc').innerText = `การแข่งขันสิ้นสุดลง ณ ${loc}`;
+            document.getElementById('winner-screen').style.display = 'block';
+        }
+
+        function updatePhysics() {
+            if (isGameOver) return;
+
+            // Apply friction (speed decays if not tapped)
+            trains[0].speed *= FRICTION;
+            trains[1].speed *= FRICTION;
 
             // Apply movement & clamping
             trains.forEach((t, i) => {
                 if (t.speed < 0.000001) t.speed = 0; // Full stop
                 t.prog += t.speed;
-                if (t.prog >= 1) { t.prog = 1; t.speed = 0; }
+
+                // Check for winner
+                if (t.prog >= 1 && !isGameOver) {
+                    t.prog = 1;
+                    declareWinner(i);
+                }
 
                 // Physics Update Position
                 let safeProg = Math.max(0, Math.min(t.prog, 0.999));
@@ -474,10 +675,15 @@
 
                 // Update DOM UI
                 let dataPoint = rawData[Math.floor(safeProg * (rawData.length - 1))];
-                document.getElementById(t.domLoc).innerHTML = `พิกัด <b style="color:#000">${dataPoint[2]}</b> 🕒 ${dataPoint[3]}`;
-                // Convert generic speed to fake km/h display (speed*100000)
-                const kph = Math.floor(t.speed * 280000);
+                let dist = Math.floor(safeProg * TOTAL_DISTANCE_KM);
+                document.getElementById(t.domLoc).innerHTML = `<b>${dataPoint[2]}</b> 🕒 ${dataPoint[3]} <br>ระยะทาง: ${dist} km`;
+
+                const kph = Math.floor(t.speed * 400000); // Visual speed modifier
                 document.getElementById(t.domSpd).innerText = `${kph} km/h`;
+
+                // Update Map
+                let pct = (safeProg * 100).toFixed(1);
+                document.getElementById(t.mapDot).style.left = `calc(${pct}% - 8px)`;
             });
         }
 
