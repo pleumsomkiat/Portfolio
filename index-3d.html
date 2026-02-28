@@ -250,6 +250,11 @@
 </head>
 
 <body>
+    <!-- Split Screen Divider -->
+    <div id="split-line"
+        style="position:absolute; top:0; left:50%; width:6px; height:100%; background:rgba(255,255,255,0.7); border-left:2px solid #000; z-index:5; pointer-events:none;">
+    </div>
+
 
     <div id="info">
         <div class="title">RACING EXPRESS 🛤️</div>
@@ -307,7 +312,6 @@
     <div id="controls">
         <span style="font-weight:bold; align-self:center;">มุมกล้อง:</span>
         <button id="viewBtn" onclick="cycleView()">บุคคลที่สาม (Third-Person)</button>
-        <button id="focusBtn" class="active" onclick="toggleFocus()">ติดตาม: Kiki Gold</button>
     </div>
 
     <div id="winner-screen">
@@ -350,16 +354,16 @@
         scene.background = new THREE.Color(0xafeeee); // Pale turquoise sky
         scene.fog = new THREE.FogExp2(0xafeeee, 0.0006);
 
-        const camera = new THREE.PerspectiveCamera(65, window.innerWidth / window.innerHeight, 0.1, 40000);
+        // Split Screen Cameras
+        const camera1 = new THREE.PerspectiveCamera(65, (window.innerWidth / 2) / window.innerHeight, 0.1, 40000);
+        const camera2 = new THREE.PerspectiveCamera(65, (window.innerWidth / 2) / window.innerHeight, 0.1, 40000);
+
         const renderer = new THREE.WebGLRenderer({ antialias: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
         renderer.setPixelRatio(window.devicePixelRatio);
         renderer.shadowMap.enabled = true;
         renderer.shadowMap.type = THREE.PCFSoftShadowMap;
         document.body.appendChild(renderer.domElement);
-
-        const controls = new OrbitControls(camera, renderer.domElement);
-        controls.enableDamping = true;
 
         // Lighting
         const hemiLight = new THREE.HemisphereLight(0xffffff, 0x446644, 1.0);
@@ -583,9 +587,10 @@
         const FRICTION = 0.985;
         const TOTAL_DISTANCE_KM = 300;
 
+        // Swapped curve1 and curve2 to fix the track positions relative to Left/Right splits
         const trains = [
-            { obj: t1Obj, curve: curve1, prog: 0, speed: 0, domLoc: 'loc1', domSpd: 'spd1', mapDot: 'dot1', name: 'Kiki Gold', color: '#D4AF37' },
-            { obj: t2Obj, curve: curve2, prog: 0, speed: 0, domLoc: 'loc2', domSpd: 'spd2', mapDot: 'dot2', name: 'Ocean Blue', color: '#4682B4' }
+            { obj: t1Obj, curve: curve2, prog: 0, speed: 0, domLoc: 'loc1', domSpd: 'spd1', mapDot: 'dot1', name: 'Kiki Gold', color: '#D4AF37' },
+            { obj: t2Obj, curve: curve1, prog: 0, speed: 0, domLoc: 'loc2', domSpd: 'spd2', mapDot: 'dot2', name: 'Ocean Blue', color: '#4682B4' }
         ];
 
         // Input Handling (Tapping A and L)
@@ -613,19 +618,11 @@
         // View State
         const views = ['third', 'front', 'drone'];
         let vIdx = 0;
-        let focusIdx = 0; // 0 = Train 1, 1 = Train 2
 
         window.cycleView = () => {
             vIdx = (vIdx + 1) % views.length;
             const maps = { 'third': 'บุคคลที่สาม (Third-Person)', 'front': 'หน้ารถไฟ (First-Person)', 'drone': 'โดรนอิสระ (Drone)' };
             document.getElementById('viewBtn').innerText = maps[views[vIdx]];
-        };
-
-        window.toggleFocus = () => {
-            focusIdx = (focusIdx === 0) ? 1 : 0;
-            const btn = document.getElementById('focusBtn');
-            btn.innerText = `ติดตาม: ${trains[focusIdx].name}`;
-            btn.style.color = focusIdx === 0 ? '#D4AF37' : '#4682B4';
         };
 
         window.restartRace = () => {
@@ -687,61 +684,76 @@
             });
         }
 
-        function updateCamera() {
+        function updateCameras() {
             const mode = views[vIdx];
-            const focusTrain = trains[focusIdx];
+            updateSingleCamera(camera1, trains[0], mode);
+            updateSingleCamera(camera2, trains[1], mode);
+        }
+
+        function updateSingleCamera(cam, focusTrain, mode) {
             const p = focusTrain.obj.position;
             const q = focusTrain.obj.quaternion;
 
             if (mode === 'third') {
-                // High dynamic trailing camera
                 let targetOffset = new THREE.Vector3(0, 20, -60);
-
-                // If going fast, pull camera back slightly for effect
-                const speedFactor = (focusTrain.speed / focusTrain.maxSpeed);
+                const speedFactor = (focusTrain.speed / focusTrain.maxSpeed || 1);
                 targetOffset.z -= speedFactor * 20;
 
                 targetOffset.applyQuaternion(q);
-
-                camera.position.lerp(p.clone().add(targetOffset), 0.05);
+                cam.position.lerp(p.clone().add(targetOffset), 0.05);
 
                 let lookOffset = new THREE.Vector3(0, 15, 100);
                 lookOffset.applyQuaternion(q);
 
-                let currentLook = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion);
-                let targetLook = p.clone().add(lookOffset).sub(camera.position).normalize();
+                let currentLook = new THREE.Vector3(0, 0, -1).applyQuaternion(cam.quaternion);
+                let targetLook = p.clone().add(lookOffset).sub(cam.position).normalize();
                 currentLook.lerp(targetLook, 0.05);
-                camera.lookAt(camera.position.clone().add(currentLook));
-                controls.enabled = false;
+                cam.lookAt(cam.position.clone().add(currentLook));
 
             } else if (mode === 'front') {
-                let camOffset = new THREE.Vector3(0, 6, 10); // Sit on nose
+                let camOffset = new THREE.Vector3(0, 6, 10);
                 camOffset.applyQuaternion(q);
-                camera.position.copy(p).add(camOffset);
+                cam.position.copy(p).add(camOffset);
 
                 let lookOffset = new THREE.Vector3(0, 3, 200);
                 lookOffset.applyQuaternion(q);
-                camera.lookAt(p.clone().add(lookOffset));
-                controls.enabled = false;
+                cam.lookAt(p.clone().add(lookOffset));
 
             } else if (mode === 'drone') {
-                controls.target.copy(p);
-                controls.enabled = true;
-                controls.update();
+                let targetOffset = new THREE.Vector3(0, 150, -150);
+                cam.position.copy(p).add(targetOffset);
+                cam.lookAt(p);
             }
         }
 
         function animate() {
             requestAnimationFrame(animate);
             updatePhysics();
-            updateCamera();
-            renderer.render(scene, camera);
+            updateCameras();
+
+            renderer.setScissorTest(true);
+
+            // Left Split (Camera 1 - Kiki Gold)
+            renderer.setViewport(0, 0, window.innerWidth / 2, window.innerHeight);
+            renderer.setScissor(0, 0, window.innerWidth / 2, window.innerHeight);
+            renderer.render(scene, camera1);
+
+            // Right Split (Camera 2 - Ocean Blue)
+            renderer.setViewport(window.innerWidth / 2, 0, window.innerWidth / 2, window.innerHeight);
+            renderer.setScissor(window.innerWidth / 2, 0, window.innerWidth / 2, window.innerHeight);
+            renderer.render(scene, camera2);
+
+            renderer.setScissorTest(false);
         }
         animate();
 
         window.addEventListener('resize', () => {
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
+            const w = window.innerWidth / 2;
+            const h = window.innerHeight;
+            camera1.aspect = w / h;
+            camera1.updateProjectionMatrix();
+            camera2.aspect = w / h;
+            camera2.updateProjectionMatrix();
             renderer.setSize(window.innerWidth, window.innerHeight);
         });
     </script>
