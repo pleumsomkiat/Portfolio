@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Travel Map: Chiang Mai - Phitsanulok | Kiki Oracle</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+    <style>
+        :root {
+            --primary-gold: #D4AF37;
+            --bg-dark: #0a0a0a;
+            --glass-bg: rgba(255, 255, 255, 0.05);
+            --text-light: #e0e0e0;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-dark);
+            color: var(--text-light);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        header {
+            padding: 1rem 2rem;
+            background: rgba(10, 10, 10, 0.8);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(212, 175, 55, 0.3);
+            z-index: 1000;
+        }
+
+        h1 {
+            margin: 0;
+            font-size: 1.5rem;
+            color: var(--primary-gold);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        #map {
+            flex-grow: 1;
+            width: 100%;
+            background: #111;
+        }
+
+        footer {
+            padding: 0.8rem;
+            text-align: center;
+            background: rgba(10, 10, 10, 0.9);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            font-size: 0.9rem;
+            color: #888;
+        }
+
+        .oracle-tag {
+            color: var(--primary-gold);
+            font-weight: bold;
+        }
+
+        /* Custom Popup Style */
+        .leaflet-popup-content-wrapper {
+            background: rgba(20, 20, 20, 0.9) !important;
+            color: #fff !important;
+            border: 1px solid var(--primary-gold);
+            border-radius: 8px;
+            backdrop-filter: blur(5px);
+        }
+
+        .leaflet-popup-tip {
+            background: var(--primary-gold) !important;
+        }
+
+        .popup-info b {
+            color: var(--primary-gold);
+        }
+    </style>
+</head>
+
+<body>
+
+    <header>
+        <h1>Travel Logs: CNX &rsaquo; PHS</h1>
+    </header>
+
+    <div id="map"></div>
+
+    <footer>
+        Created by <span class="oracle-tag">กีกี้ (Kiki) Oracle</span> &bull; Workshop: Two Rivers Oracle
+    </footer>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <script>
+        // CSV Data (Simplified for the map)
+        const rawCsv = `lat,lon,accuracy,source,locality,address,updated
+18.464717,99.05675,5,GPS,Mueang Lamphun District,"Mueang Lamphun District, Lamphun 51000",2026-02-27 08:04:17
+18.456181,99.057669,14,GPS,Mueang Lamphun District,"Mueang Lamphun District, Lamphun 51000",2026-02-27 08:09:47
+18.456107,99.087873,15,GPS,Mae Tha District,"Mae Tha District, Lamphun 51140",2026-02-27 08:14:32
+18.461019,99.137354,14,GPS,Mae Tha District,"Mae Tha District, Lamphun 51140",2026-02-27 08:18:36
+18.392756,99.265662,51,GPS,Hang Chat District,"Hang Chat District, Lampang 52190",2026-02-27 09:01:45
+18.364852,99.287066,23,GPS,Hang Chat District,"Hang Chat District, Lampang 52190",2026-02-27 09:07:09
+18.37956,99.305078,9,GPS,Hang Chat District,"Hang Chat District, Lampang 52190",2026-02-27 09:11:23
+18.312283,99.413179,6,GPS,Mueang Lampang District,"Mueang Lampang District, Lampang 52100",2026-02-27 09:22:15
+18.281088,99.469882,8,GPS,Mueang Lampang District,"107 Rotfai Road, Sop Tui, Mueang Lampang District, Lampang 52100",2026-02-27 09:27:25
+18.275846,99.47753,5,GPS,Mueang Lampang District,"Mueang Lampang District, Lampang 52100",2026-02-27 09:32:24
+18.223882,99.515192,10,GPS,Mueang Lampang District,"Mueang Lampang District, Lampang 52000",2026-02-27 09:37:48
+18.240787,99.596923,5,GPS,Mueang Lampang District,"Mueang Lampang District, Lampang 52000",2026-02-27 09:48:13
+18.256232,99.655373,14,GPS,Mae Mo District,"84 Moo 5, Mae Mo, Mae Mo District, Lampang 52220",2026-02-27 09:53:39
+18.264667,99.709782,5,GPS,Mae Mo District,"62 Soi Pracha Rat, Mae Mo, Mae Mo District, Lampang 52220",2026-02-27 09:58:27
+18.277847,99.801018,8,GPS,Mae Mo District,"Mae Mo District, Lampang 52220",2026-02-27 10:06:25
+18.297822,99.86354,9,GPS,Mae Mo District,"Mae Mo District, Lampang 52220",2026-02-27 10:14:25
+18.211666,99.871989,5,GPS,Long District,"76 Rural Highway 4003, Ban Pin, Long District, Phrae 54150",2026-02-27 10:29:32
+18.194947,99.870168,26,GPS,Long District,"Long District, Phrae 54150",2026-02-27 10:32:30
+18.096358,99.866883,2,GPS,Long District,"203 Thetsaban 2 Road, Ban Pin, Long District, Phrae 54150",2026-02-27 10:49:41
+18.080372,99.879712,16,GPS,Long District,"Long District, Phrae 54150",2026-02-27 10:59:32
+18.040347,99.916938,60,GPS,Long District,"Long District, Phrae 54150",2026-02-27 11:09:52
+18.032004,99.922519,36,GPS,Long District,"Long District, Phrae 54150",2026-02-27 11:11:34
+17.97274,100.052057,14,GPS,Den Chai District,"Den Chai District, Phrae 54110",2026-02-27 11:31:00
+17.92115,100.062211,10,GPS,Den Chai District,"Den Chai District, Phrae 54110",2026-02-27 11:36:34
+17.881632,100.040743,6,GPS,Den Chai District,"Den Chai District, Phrae 54110",2026-02-27 11:41:39
+17.839016,100.046134,14,GPS,Mueang Uttaradit District,"Mueang Uttaradit District, Uttaradit 53000",2026-02-27 11:47:01
+17.808954,100.066603,5,GPS,Mueang Uttaradit District,"Mueang Uttaradit District, Uttaradit 53000",2026-02-27 11:51:54
+17.77201,100.108,5,GPS,Mueang Uttaradit District,"169 Ro Pho Cho. Uttaradit 4013 Road, Ban Dan Na Kham, Mueang Uttaradit District, Uttaradit 53000",2026-02-27 11:57:12
+17.723428,100.126752,14,GPS,Mueang Uttaradit District,"33–99 Thanon Phatthanakan Soi 13, Ban Dan Na Kham, Mueang Uttaradit District, Uttaradit 53000",2026-02-27 12:02:22
+17.652857,100.122463,5,GPS,Mueang Uttaradit District,"Pracha Ruam Chai Road, Tha Sao, Mueang Uttaradit District, Uttaradit 53000",2026-02-27 12:07:28
+17.639648,100.10107,8,Wifi,Mueang Uttaradit District,"Sila At, Tha It, Mueang Uttaradit District, Uttaradit 53000",2026-02-27 12:12:16
+17.620929,100.097137,14,GPS,Mueang Uttaradit District,"1/47 Boromma At Road, Tha It, Mueang Uttaradit District, Uttaradit 53000",2026-02-27 12:17:39
+17.594402,100.093817,6,GPS,Mueang Uttaradit District,"242 Ban Nong Khan Road, Ban Ko, Mueang Uttaradit District, Uttaradit 53000",2026-02-27 12:23:17
+16.817458,100.25806,60,GPS,Mueang Phitsanulok District,"Phibun Songkhram Rajabhat University, Nai Mueang, Mueang Phitsanulok District, Phitsanulok 65000",2026-02-27 16:23:02
+16.816864,100.258006,10,GPS,Mueang Phitsanulok District,"Pibulsongkram Rajabhat University, Nai Mueang, Mueang Phitsanulok District, Phitsanulok 65000",2026-02-27 16:28:33
+16.817666,100.258349,8,GPS,Mueang Phitsanulok District,"66 Wang Chan Road, Nai Mueang, Mueang Phitsanulok District, Phitsanulok 65000",2026-02-27 17:55:38
+16.818115,100.258121,4,GPS,Mueang Phitsanulok District,"66 Wang Chan Road, Nai Mueang, Mueang Phitsanulok District, Phitsanulok 65000",2026-02-27 18:07:27
+16.812322,100.261597,4,Wifi,Mueang Phitsanulok District,"169/4 Moo 2, Nai Mueang, Mueang Phitsanulok District, Phitsanulok 65000",2026-02-27 19:34:15
+16.817694,100.258205,5,Wifi,Mueang Phitsanulok District,"66 Wang Chan Road, Nai Mueang, Mueang Phitsanulok District, Phitsanulok 65000",2026-02-27 20:39:23`;
+
+        function parseCSV(csv) {
+            const lines = csv.trim().split('\n');
+            const headers = lines[0].split(',');
+            return lines.slice(1).map(line => {
+                // Simple split, handles quotes for address
+                const regex = /(".*?"|[^",\r\n]+)(?=\s*,|\s*$)/g;
+                const values = line.match(regex).map(v => v.replace(/^"|"$/g, ''));
+                const obj = {};
+                headers.forEach((h, i) => obj[h.trim()] = values[i]);
+                return obj;
+            });
+        }
+
+        const data = parseCSV(rawCsv);
+
+        // Initialize Map
+        const map = L.map('map').setView([17.5, 99.5], 7);
+
+        // Dark Theme Layer
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+            attribution: '&copy; CartoDB'
+        }).addTo(map);
+
+        const latlngs = [];
+
+        data.forEach((point, index) => {
+            const lat = parseFloat(point.lat);
+            const lon = parseFloat(point.lon);
+            if (isNaN(lat) || isNaN(lon)) return;
+
+            latlngs.push([lat, lon]);
+
+            // Custom Marker
+            const marker = L.circleMarker([lat, lon], {
+                radius: 6,
+                fillColor: index === 0 ? "#00ff00" : (index === data.length - 1 ? "#ff0000" : "#D4AF37"),
+                color: "#fff",
+                weight: 1,
+                opacity: 1,
+                fillOpacity: 0.8
+            }).addTo(map);
+
+            marker.bindPopup(`
+            <div class="popup-info">
+                <b>📍 สถานที่:</b> ${point.locality}<br>
+                <b>🕒 เวลา:</b> ${point.updated}<br>
+                <b>🏠 ที่อยู่:</b> ${point.address}
+            </div>
+        `);
+        });
+
+        // Draw the path
+        const polyline = L.polyline(latlngs, {
+            color: '#D4AF37',
+            weight: 3,
+            opacity: 0.6,
+            dashArray: '5, 10'
+        }).addTo(map);
+
+        // Zoom to fit path
+        map.fitBounds(polyline.getBounds(), { padding: [50, 50] });
+
+    </script>
+</body>
+
+</html>
