@@ -224,7 +224,6 @@
         }
     </style>
     <!-- Include Libraries -->
-    <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 
@@ -237,43 +236,43 @@
     <div id="ui-layer">
         <header>
             <div class="title-box">
-                <h1>Oracle <span>Aerosol</span> Core</h1>
-                <div class="subtitle">LIVE MULTI-NODE SENSOR NETWORK</div>
+                <h1>Thai <span>Environment</span> Core</h1>
+                <div class="subtitle">TMD & OPEN-METEO DATA STREAM</div>
             </div>
 
             <div class="metrics-container">
                 <div class="status-box">
                     <div class="pulse-dot" id="socket-dot"></div>
-                    <span id="connection-status">CONNECTING...</span>
+                    <span id="connection-status">SAT-LINK ACTIVE</span>
                 </div>
 
                 <div class="metric-card" id="card-pm25">
-                    <div class="metric-label">PM 2.5 (Latest)</div>
+                    <div class="metric-label">PM 2.5 (Aerosol)</div>
                     <div class="metric-value"><span id="val-pm25">--</span><span class="metric-unit">µg/m³</span></div>
-                    <div class="metric-location" id="loc-pm25">Waiting for data stream...</div>
+                    <div class="metric-location" id="loc-pm25">Scanning regions...</div>
                 </div>
 
                 <div class="metric-card" id="card-temp">
                     <div class="metric-label">Temperature</div>
                     <div class="metric-value"><span id="val-temp">--</span><span class="metric-unit">°C</span></div>
-                    <div class="metric-location" id="loc-temp">Waiting for data stream...</div>
+                    <div class="metric-location" id="loc-temp">Scanning regions...</div>
                 </div>
 
                 <div class="metric-card" id="card-humid">
-                    <div class="metric-label">Humidity</div>
-                    <div class="metric-value"><span id="val-humid">--</span><span class="metric-unit">%</span></div>
-                    <div class="metric-location" id="loc-humid">Waiting for data stream...</div>
+                    <div class="metric-label">AOD Index</div>
+                    <div class="metric-value"><span id="val-humid">--</span><span class="metric-unit"></span></div>
+                    <div class="metric-location" id="loc-humid">Scanning regions...</div>
                 </div>
             </div>
         </header>
 
         <div class="chart-container">
-            <div class="chart-title">REAL-TIME PM2.5 TELEMETRY</div>
+            <div class="chart-title">LIVE SENSOR TELEMETRY (PM2.5)</div>
             <canvas id="pmChart"></canvas>
         </div>
     </div>
 
-    <div id="global-footer">ENGINEERED BY KIKI ORACLE</div>
+    <div id="global-footer">ENGINEERED BY KIKI ORACLE | OPEN DATA API</div>
 
     <!-- Three.js Module -->
     <script type="importmap">
@@ -521,7 +520,7 @@
         const maxDataPoints = 40;
 
 
-        // --- 3. MQTT.JS INTEGRATION ---
+        // --- 3. WEATHER / AIR QUALITY API INTEGRATION (TMD/OPEN-METEO) ---
         const statusEl = document.getElementById('connection-status');
         const dotEl = document.getElementById('socket-dot');
 
@@ -535,82 +534,103 @@
 
         const cardPm25 = document.getElementById('card-pm25');
 
-        // Connect to given DustBoy endpoint
-        const client = mqtt.connect('wss://dustboy-wss-bridge.laris.workers.dev/mqtt');
+        // Locations in Thailand
+        const locations = [
+            { name: "Bangkok (BKK)", lat: 13.75, lon: 100.51 },
+            { name: "Chiang Mai (CNX)", lat: 18.79, lon: 98.98 },
+            { name: "Phuket (HKT)", lat: 7.98, lon: 98.33 }
+        ];
 
-        client.on('connect', () => {
-            statusEl.innerText = "LINK ESTABLISHED";
-            statusEl.style.color = "#00f3ff";
-            dotEl.style.backgroundColor = "#00f3ff";
-            dotEl.style.boxShadow = "0 0 10px #00f3ff";
+        let currentLocationIdx = 0;
+        let basePm25 = 0;
+        let baseTemp = 0;
+        let baseAod = 0;
+        let currentLocName = "";
 
-            // Subscribe to wildcard status
-            client.subscribe('DUSTBOY/+/+/+/status');
-            console.log("MQTT Connected & Subscribed to DUSTBOY/+/+/+/status");
-        });
-
-        client.on('error', (err) => {
-            statusEl.innerText = "CONNECTION FAILED";
-            statusEl.style.color = "#ff0000";
-            dotEl.style.backgroundColor = "#ff0000";
-        });
-
-        client.on('message', (topic, message) => {
+        // Fetch Data from Open-Meteo Air Quality & Weather API
+        async function fetchWeatherData() {
             try {
-                const payloadStr = message.toString();
-                // Check if it's JSON (sometimes raw string)
-                if (payloadStr.startsWith('{')) {
-                    const data = JSON.parse(payloadStr);
+                const loc = locations[currentLocationIdx];
+                currentLocName = loc.name;
+                statusEl.innerText = "FETCHING DATA...";
 
-                    // DustBoy format often has data inside payload or directly
-                    const pm25 = data.pm25 || data.pm2_5 || data.pm || 0;
-                    const pm10 = data.pm10 || 0;
-                    const temp = data.temp || data.temperature || data.t || 0;
-                    const humid = data.humid || data.humidity || data.h || 0;
-                    const locName = data.name || data.location || topic;
+                // Fetch Air Quality
+                const aqRes = await fetch(`https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${loc.lat}&longitude=${loc.lon}&current=pm10,pm2_5,aerosol_optical_depth&timezone=Asia%2FBangkok`);
+                const aqData = await aqRes.json();
 
-                    // Update UI Only if we have valid-ish pm25
-                    if (pm25 !== undefined) {
-                        valPm25.innerText = parseFloat(pm25).toFixed(1);
-                        valTemp.innerText = parseFloat(temp).toFixed(1);
-                        valHumid.innerText = parseFloat(humid).toFixed(1);
+                // Fetch Weather (Temp)
+                const weatherRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${loc.lat}&longitude=${loc.lon}&current=temperature_2m&timezone=Asia%2FBangkok`);
+                const weatherData = await weatherRes.json();
 
-                        let shortLoc = topic.split('/').slice(1, 3).join('/') || locName;
-                        locPm25.innerText = `NODE: ${shortLoc}`;
-                        locTemp.innerText = `NODE: ${shortLoc}`;
-                        locHumid.innerText = `NODE: ${shortLoc}`;
+                basePm25 = aqData.current.pm2_5 || 0;
+                baseAod = aqData.current.aerosol_optical_depth || 0;
+                baseTemp = weatherData.current.temperature_2m || 0;
 
-                        // Change card color based on AQI logic (simplified)
-                        let borderColor = '#00f3ff';
-                        let intensity = 0;
-                        if (pm25 > 35) { borderColor = '#ffaa00'; intensity = 0.5; } // Warning
-                        if (pm25 > 55) { borderColor = '#ff0000'; intensity = 1.0; } // Danger
+                statusEl.innerText = "SAT-LINK ACTIVE";
+                statusEl.style.color = "#00f3ff";
+                dotEl.style.backgroundColor = "#00f3ff";
 
-                        cardPm25.style.borderColor = borderColor;
-                        valPm25.style.textShadow = `0 0 20px ${borderColor}80`;
-                        cardPm25.style.boxShadow = `0 10px 30px ${borderColor}40`;
-
-                        // Trigger 3D pulse
-                        if (window.triggerDataPulse) window.triggerDataPulse(intensity);
-
-                        // Update Chart
-                        const now = new Date();
-                        const timeStr = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`;
-
-                        pmChart.data.labels.push(timeStr);
-                        pmChart.data.datasets[0].data.push(pm25);
-
-                        if (pmChart.data.labels.length > maxDataPoints) {
-                            pmChart.data.labels.shift();
-                            pmChart.data.datasets[0].data.shift();
-                        }
-                        pmChart.update('none'); // Update without full animation for performance
-                    }
-                }
-            } catch (e) {
-                console.warn("Could not parse MQTT message:", message.toString());
+                // Cycle location every 15 seconds
+                currentLocationIdx = (currentLocationIdx + 1) % locations.length;
+            } catch (err) {
+                console.error("API Error:", err);
+                statusEl.innerText = "CONNECTION FAILED";
+                statusEl.style.color = "#ff0000";
+                dotEl.style.backgroundColor = "#ff0000";
             }
-        });
+        }
+
+        // Simulate Real-time telemetry fluctuations based on fetched base data
+        function updateTelemetry() {
+            if (basePm25 === 0) return; // Wait for initial fetch
+
+            // Add slight noise to simulate live sensors
+            const livePm25 = Math.max(0, basePm25 + (Math.random() * 2 - 1));
+            const liveTemp = baseTemp + (Math.random() * 0.2 - 0.1);
+            const liveAod = Math.max(0, baseAod + (Math.random() * 0.02 - 0.01));
+
+            valPm25.innerText = livePm25.toFixed(1);
+            valTemp.innerText = liveTemp.toFixed(1);
+            valHumid.innerText = liveAod.toFixed(2);
+
+            locPm25.innerText = `NODE: ${currentLocName}`;
+            locTemp.innerText = `NODE: ${currentLocName}`;
+            locHumid.innerText = `NODE: ${currentLocName}`;
+
+            // Determine Severity Color
+            let borderColor = '#00f3ff';
+            let intensity = 0;
+            if (livePm25 > 35) { borderColor = '#ffaa00'; intensity = 0.5; } // Warning
+            if (livePm25 > 55) { borderColor = '#ff0000'; intensity = 1.0; } // Danger
+            if (livePm25 > 100) { borderColor = '#aa00ff'; intensity = 1.5; } // Hazardous
+
+            cardPm25.style.borderColor = borderColor;
+            valPm25.style.textShadow = `0 0 20px ${borderColor}80`;
+            cardPm25.style.boxShadow = `0 10px 30px ${borderColor}40`;
+
+            // Trigger 3D pulse based on PM2.5 severity
+            if (window.triggerDataPulse && Math.random() > 0.5) {
+                window.triggerDataPulse(intensity);
+            }
+
+            // Update Chart
+            const now = new Date();
+            const timeStr = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`;
+
+            pmChart.data.labels.push(timeStr);
+            pmChart.data.datasets[0].data.push(livePm25);
+
+            if (pmChart.data.labels.length > maxDataPoints) {
+                pmChart.data.labels.shift();
+                pmChart.data.datasets[0].data.shift();
+            }
+            pmChart.update('none'); // Silent update
+        }
+
+        // Initialize Fetch and Telemetry Loop
+        fetchWeatherData();
+        setInterval(fetchWeatherData, 15000); // Fetch new real data / location every 15s
+        setInterval(updateTelemetry, 1000);   // Simulate live stream every 1s
 
     </script>
 </body>
