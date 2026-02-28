@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>3D Travel Train: CNX - PHS | Kiki Oracle</title>
+    <title>3D Travel Train: Dual Control | Kiki Oracle</title>
     <style>
         body {
             margin: 0;
@@ -13,12 +13,13 @@
             font-family: sans-serif;
         }
 
+        /* Information Panel */
         #info {
             position: absolute;
             top: 20px;
             left: 20px;
             color: #333;
-            background: rgba(255, 255, 255, 0.8);
+            background: rgba(255, 255, 255, 0.9);
             padding: 15px;
             border-radius: 8px;
             border: 1px solid rgba(0, 0, 0, 0.2);
@@ -27,37 +28,62 @@
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
 
+        /* Control Panel */
         #controls {
             position: absolute;
             bottom: 30px;
             left: 50%;
             transform: translateX(-50%);
             display: flex;
+            flex-direction: column;
+            gap: 15px;
+            background: rgba(255, 255, 255, 0.85);
+            padding: 15px 25px;
+            border-radius: 12px;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(10px);
+            align-items: center;
+        }
+
+        .row {
+            display: flex;
             gap: 10px;
+            align-items: center;
         }
 
         button {
-            background: rgba(255, 255, 255, 0.8);
+            background: #fff;
             color: #333;
-            border: 1px solid #999;
-            padding: 10px 20px;
+            border: 1px solid #aaa;
+            padding: 10px 15px;
             cursor: pointer;
-            border-radius: 20px;
-            backdrop-filter: blur(5px);
-            transition: all 0.3s;
+            border-radius: 6px;
+            transition: all 0.2s;
             font-size: 14px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
             font-weight: bold;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
         }
 
         button:hover {
-            background: rgba(255, 255, 255, 1);
-            transform: translateY(-2px);
+            background: #f0f0f0;
+            transform: translateY(-1px);
+        }
+
+        button.active {
+            background: #D4AF37;
+            color: #fff;
+            border-color: #b5952f;
+        }
+
+        button.active-blue {
+            background: #4682B4;
+            color: #fff;
+            border-color: #315f85;
         }
 
         .label {
             font-size: 12px;
-            color: #888;
+            color: #555;
             margin-top: 5px;
         }
 
@@ -69,6 +95,17 @@
             font-size: 12px;
             text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
         }
+
+        .slider-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+        }
+
+        input[type=range] {
+            width: 200px;
+        }
     </style>
 </head>
 
@@ -76,13 +113,34 @@
 
     <div id="info">
         <div style="font-weight: bold; font-size: 1.2rem;">TRAIN VIEW: CNX &rsaquo; PHS</div>
-        <div id="location">กำลังเตรียมการออกเดินรถ...</div>
+        <div id="trainSelectName" style="color: #D4AF37; font-weight: bold; margin-top: 5px;">กำลังติดตาม: ขบวน Kiki
+            Gold</div>
+        <div id="location" style="margin-top: 5px;">กำลังเตรียมการออกเดินรถ...</div>
         <div class="label" id="timestamp">--:--:--</div>
     </div>
 
     <div id="controls">
-        <button id="viewBtn" onclick="cycleView()">สลับมุมมอง: มุมมองหน้ารถไฟ (Front)</button>
-        <button onclick="resetTrip()">เริ่มใหม่รอบวิ่ง</button>
+        <div class="row">
+            <span>ติดตามขบวน:</span>
+            <button id="btnTrain1" class="active" onclick="selectTrain(1)">Kiki Gold (ขบวนทอง)</button>
+            <button id="btnTrain2" onclick="selectTrain(2)">Ocean Express (ขบวนน้ำเงิน)</button>
+        </div>
+
+        <div class="row">
+            <span>มุมกล้อง:</span>
+            <button id="viewBtn" onclick="cycleView()">หน้ารถไฟ (Front)</button>
+        </div>
+
+        <div class="slider-container">
+            <span id="speedLabel">ความเร็วขบวนที่เลือก: เดินหน้าปกติ</span>
+            <div class="row">
+                <button onclick="changeSpeed(-0.0004)">◀◀ ถอยหลังเร็ว</button>
+                <button onclick="changeSpeed(-0.0001)">◀ ถอยช้า</button>
+                <button onclick="changeSpeed(0)">หยุด (Stop)</button>
+                <button onclick="changeSpeed(0.0001)">เดินหน้าช้า ▶</button>
+                <button onclick="changeSpeed(0.0004)">เดินหน้าปกติ ▶▶</button>
+            </div>
+        </div>
     </div>
 
     <div id="footer">Created by กีกี้ (Kiki) Oracle</div>
@@ -138,25 +196,34 @@
 
         // Scene Setup
         const scene = new THREE.Scene();
-        scene.background = new THREE.Color(0x87CEEB); // Sky blue
-        scene.fog = new THREE.FogExp2(0x87CEEB, 0.001);
+        scene.background = new THREE.Color(0x87CEEB); // Bright Sky blue
+        scene.fog = new THREE.FogExp2(0x87CEEB, 0.0008); // Lighter fog for better visibility
 
-        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 10000);
-        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 20000);
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
         renderer.setSize(window.innerWidth, window.innerHeight);
         renderer.setPixelRatio(window.devicePixelRatio);
+        renderer.shadowMap.enabled = true; // Enable shadows
         document.body.appendChild(renderer.domElement);
 
         const controls = new OrbitControls(camera, renderer.domElement);
         controls.enableDamping = true;
 
-        // Lighting
-        const ambientLight = new THREE.AmbientLight(0xffffff, 0.6); // Brighter ambient
-        scene.add(ambientLight);
+        // --- ENHANCED DAYLIGHT LIGHTING ---
+        const hemiLight = new THREE.HemisphereLight(0xffffff, 0x444444, 1.2);
+        scene.add(hemiLight);
 
-        const directionalLight = new THREE.DirectionalLight(0xffffff, 1.5); // Sunlight
-        directionalLight.position.set(200, 500, 300);
-        scene.add(directionalLight);
+        const dirLight = new THREE.DirectionalLight(0xffffff, 2.0); // Bright sunlight
+        dirLight.position.set(500, 1000, 500);
+        dirLight.castShadow = true;
+        dirLight.shadow.camera.top = 500;
+        dirLight.shadow.camera.bottom = -500;
+        dirLight.shadow.camera.left = -500;
+        dirLight.shadow.camera.right = 500;
+        scene.add(dirLight);
+
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+        scene.add(ambientLight);
 
         // Convert GPS to 3D Space (Scale/Mercator simplified)
         const scale = 5000;
@@ -175,120 +242,202 @@
         const curve = new THREE.CatmullRomCurve3(points);
 
         // Track
-        const tubeGeo = new THREE.TubeGeometry(curve, 200, 1.5, 8, false); // Wider track for large train
-        const tubeMat = new THREE.MeshPhongMaterial({ color: 0x555555 }); // Lighter grey track
+        const tubeGeo = new THREE.TubeGeometry(curve, 300, 1.8, 8, false);
+        const tubeMat = new THREE.MeshPhongMaterial({ color: 0x666666, shininess: 10 });
         const track = new THREE.Mesh(tubeGeo, tubeMat);
+        track.receiveShadow = true;
         scene.add(track);
 
-        // Ground Grid
-        const grid = new THREE.GridHelper(30000, 150, 0x2d4c1e, 0x2d4c1e); // Greenish grid
-        grid.position.y = -1;
+        // Ground Plane (Daytime Green Terrain)
+        const planeGeo = new THREE.PlaneGeometry(80000, 80000);
+        const planeMat = new THREE.MeshPhongMaterial({ color: 0x4CAF50 }); // Grass green
+        const plane = new THREE.Mesh(planeGeo, planeMat);
+        plane.rotation.x = -Math.PI / 2;
+        plane.position.y = -2;
+        plane.receiveShadow = true;
+        scene.add(plane);
+
+        // Grid over ground
+        const grid = new THREE.GridHelper(80000, 400, 0x388E3C, 0x388E3C);
+        grid.position.y = -1.9;
         scene.add(grid);
 
-        // Train Model (Kiki Special - Expanded Size)
-        const trainGroup = new THREE.Group();
+        // Train Creation Factory
+        function createTrain(mainColor, cabinColor, eyeColor) {
+            const group = new THREE.Group();
 
-        // Main Body
-        const bodyGeo = new THREE.BoxGeometry(4, 5, 14);
-        const bodyMat = new THREE.MeshPhongMaterial({ color: 0xD4AF37 });
-        const body = new THREE.Mesh(bodyGeo, bodyMat);
-        body.position.y = 2.5; // Lift up to sit on track
-        trainGroup.add(body);
+            // Main Body
+            const bodyGeo = new THREE.BoxGeometry(4.5, 5, 15);
+            const bodyMat = new THREE.MeshPhongMaterial({ color: mainColor, shininess: 80 });
+            const body = new THREE.Mesh(bodyGeo, bodyMat);
+            body.position.y = 2.5;
+            body.castShadow = true;
+            group.add(body);
 
-        // Driver's Cabin
-        const headGeo = new THREE.BoxGeometry(4.2, 4, 3);
-        const headMat = new THREE.MeshPhongMaterial({ color: 0x1a1a1a });
-        const head = new THREE.Mesh(headGeo, headMat);
-        head.position.y = 3.5;
-        head.position.z = 7;
-        trainGroup.add(head);
+            // Driver's Cabin
+            const headGeo = new THREE.BoxGeometry(4.7, 4.5, 4);
+            const headMat = new THREE.MeshPhongMaterial({ color: cabinColor });
+            const head = new THREE.Mesh(headGeo, headMat);
+            head.position.y = 3.5;
+            head.position.z = 7.5;
+            head.castShadow = true;
+            group.add(head);
 
-        // Windows / Front Lights
-        const lightGeo = new THREE.CircleGeometry(0.7, 16);
-        const lightMat = new THREE.MeshBasicMaterial({ color: 0xffff00 });
-        const leftEye = new THREE.Mesh(lightGeo, lightMat);
-        leftEye.position.set(-1.2, 2.5, 8.51);
-        trainGroup.add(leftEye);
-        const rightEye = leftEye.clone();
-        rightEye.position.x = 1.2;
-        trainGroup.add(rightEye);
+            // Windows / Front Lights
+            const lightGeo = new THREE.CircleGeometry(0.8, 16);
+            const lightMat = new THREE.MeshBasicMaterial({ color: eyeColor });
+            const leftEye = new THREE.Mesh(lightGeo, lightMat);
+            leftEye.position.set(-1.4, 3.0, 9.51);
+            group.add(leftEye);
+            const rightEye = leftEye.clone();
+            rightEye.position.x = 1.4;
+            group.add(rightEye);
 
-        // Back glowing engine/light
-        const tailLightGeo = new THREE.CircleGeometry(0.5, 16);
-        const tailLightMat = new THREE.MeshBasicMaterial({ color: 0xff0000 });
-        const tailLight = new THREE.Mesh(tailLightGeo, tailLightMat);
-        tailLight.rotation.y = Math.PI; // Face backwards
-        tailLight.position.set(0, 2.5, -7.01);
-        trainGroup.add(tailLight);
+            // Back tail light
+            const tailLightGeo = new THREE.CircleGeometry(0.6, 16);
+            const tailLightMat = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+            const tailLight = new THREE.Mesh(tailLightGeo, tailLightMat);
+            tailLight.rotation.y = Math.PI;
+            tailLight.position.set(0, 2.5, -7.51);
+            group.add(tailLight);
 
-        scene.add(trainGroup);
+            return group;
+        }
 
-        // Animation variables
-        let progress = 0;
-        const speed = 0.0002;
+        // Create Trains
+        const train1 = createTrain(0xD4AF37, 0x1a1a1a, 0xffff00); // Kiki Gold
+        scene.add(train1);
 
+        const train2 = createTrain(0x4682B4, 0xeeeeee, 0x00ffff); // Ocean Blue
+        scene.add(train2);
+
+        // Train States
+        const trains = [
+            { obj: train1, progress: 0.0, speed: 0.0004, name: "Kiki Gold (ขบวนทอง)", color: "#D4AF37" },
+            { obj: train2, progress: 0.05, speed: 0.0004, name: "Ocean Express (ขบวนน้ำเงิน)", color: "#4682B4" } // Starts a bit ahead
+        ];
+
+        let activeTrainIndex = 0; // Default follow Train 1
+
+        // View States
         let viewModes = ['front', 'third', 'drone'];
         let currentViewIndex = 0;
 
+        // --- UI CONTROLS EXPOSED TO WINDOW ---
         window.cycleView = () => {
             currentViewIndex = (currentViewIndex + 1) % viewModes.length;
             const mode = viewModes[currentViewIndex];
-            let modeName = "มุมมองหน้ารถไฟ (Front)";
-            if (mode === 'third') modeName = "มุมมองบุคคลที่สาม (Third-Person)";
-            if (mode === 'drone') modeName = "มุมมองโดรน (Drone/Orbit)";
-            document.getElementById('viewBtn').innerText = `สลับมุมมอง: ${modeName}`;
+            let modeName = "หน้ารถไฟ (Front)";
+            if (mode === 'third') modeName = "บุคคลที่สาม (Third-Person)";
+            if (mode === 'drone') modeName = "โดรน (Drone/Orbit)";
+            document.getElementById('viewBtn').innerText = `${modeName}`;
         };
 
-        window.resetTrip = () => { progress = 0; };
+        window.selectTrain = (id) => {
+            activeTrainIndex = id - 1;
+            document.getElementById('btnTrain1').className = (id === 1) ? 'active' : '';
+            document.getElementById('btnTrain2').className = (id === 2) ? 'active-blue' : '';
 
-        function updateKikiInfo(index) {
-            const dataPoint = rawData[Math.floor(index * (rawData.length - 1))];
-            document.getElementById('location').innerText = `🚉 ${dataPoint[2]}`;
+            const t = trains[activeTrainIndex];
+            document.getElementById('trainSelectName').innerText = `กำลังติดตาม: ขบวน ${t.name}`;
+            document.getElementById('trainSelectName').style.color = t.color;
+
+            updateSpeedUI();
+        };
+
+        window.changeSpeed = (newSpeed) => {
+            trains[activeTrainIndex].speed = newSpeed;
+            updateSpeedUI();
+        };
+
+        window.resetTrip = () => {
+            trains.forEach(t => t.progress = 0);
+        };
+
+        function updateSpeedUI() {
+            const spd = trains[activeTrainIndex].speed;
+            let lbl = "หยุด (Stop)";
+            if (spd > 0.0002) lbl = "เดินหน้าปกติ ▶▶";
+            else if (spd > 0) lbl = "เดินหน้าช้า ▶";
+            else if (spd < -0.0002) lbl = "◀◀ ถอยหลังเร็ว";
+            else if (spd < 0) lbl = "◀ ถอยช้า";
+
+            document.getElementById('speedLabel').innerText = `ความเร็วขบวนที่เลือก: ${lbl}`;
+        }
+
+        // Info Panel Update
+        function updateInfoPanel() {
+            const t = trains[activeTrainIndex];
+            let prog = t.progress;
+            if (prog < 0) prog = 0;
+            if (prog >= 1) prog = 0.999;
+
+            const dataPoint = rawData[Math.floor(prog * (rawData.length - 1))];
+            document.getElementById('location').innerText = `📍 ${dataPoint[2]}`;
             document.getElementById('timestamp').innerText = `เวลา: ${dataPoint[3]}`;
         }
 
+        // Animation Loop
         function animate() {
             requestAnimationFrame(animate);
 
-            progress += speed;
-            if (progress > 1) progress = 0;
+            // Update all trains
+            trains.forEach(t => {
+                t.progress += t.speed;
+                if (t.progress > 1) t.progress = 1; // Stop at end
+                if (t.progress < 0) t.progress = 0; // Stop at start
 
-            const pos = curve.getPointAt(progress);
-            const lookAtPos = curve.getPointAt(Math.min(progress + 0.001, 1));
+                // Prevent exact 1 for getPointAt to avoid errors
+                const safeProg = Math.min(Math.max(t.progress, 0), 0.999);
+                const pos = curve.getPointAt(safeProg);
+                const lookAtPos = curve.getPointAt(Math.min(safeProg + 0.001, 1));
 
-            trainGroup.position.copy(pos);
-            trainGroup.lookAt(lookAtPos);
+                t.obj.position.copy(pos);
+                t.obj.lookAt(lookAtPos);
+            });
 
-            updateKikiInfo(progress);
-
+            // Camera Logic (Follows active train)
+            const activeTrain = trains[activeTrainIndex];
+            const safeProg = Math.min(Math.max(activeTrain.progress, 0), 0.999);
+            const pos = curve.getPointAt(safeProg);
             const mode = viewModes[currentViewIndex];
 
+            updateInfoPanel();
+
             if (mode === 'front') {
-                // Front View Camera (Driver view)
-                const camOffset = new THREE.Vector3(0, 4.5, 8); // Placed top front of the head
-                camOffset.applyQuaternion(trainGroup.quaternion);
+                // Driver view
+                const camOffset = new THREE.Vector3(0, 5, 8);
+                camOffset.applyQuaternion(activeTrain.obj.quaternion);
                 camera.position.copy(pos).add(camOffset);
 
-                const camLookAt = new THREE.Vector3(0, 2, 80); // Looking far ahead
-                camLookAt.applyQuaternion(trainGroup.quaternion);
+                const camLookAt = new THREE.Vector3(0, 2, 80);
+                camLookAt.applyQuaternion(activeTrain.obj.quaternion);
                 camera.lookAt(pos.clone().add(camLookAt));
                 controls.enabled = false;
-            } else if (mode === 'third') {
-                // Third Person View (Behind, slightly lower, looking further ahead and up)
-                const camOffset = new THREE.Vector3(0, 8, -35); // Lowered from 15 to 8, pushed back from -25 to -35
-                camOffset.applyQuaternion(trainGroup.quaternion);
 
-                // Smoothly interpolate camera position using lerp for a highly dynamic feel
+            } else if (mode === 'third') {
+                // Smooth Third Person View
+                const camOffset = new THREE.Vector3(0, 15, -45); // High and back
+                camOffset.applyQuaternion(activeTrain.obj.quaternion);
+
                 camera.position.lerp(pos.clone().add(camOffset), 0.1);
 
-                const camLookAt = new THREE.Vector3(0, 12, 40); // Look much higher (5 -> 12) and further ahead (20 -> 40)
-                camLookAt.applyQuaternion(trainGroup.quaternion);
-                camera.lookAt(pos.clone().add(camLookAt));
+                const camLookAt = new THREE.Vector3(0, 10, 30); // Look at train body + ahead
+                camLookAt.applyQuaternion(activeTrain.obj.quaternion);
+
+                // Smooth lookat
+                const currentLook = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion);
+                const targetLook = pos.clone().add(camLookAt).sub(camera.position).normalize();
+                currentLook.lerp(targetLook, 0.1);
+                camera.lookAt(camera.position.clone().add(currentLook));
+
                 controls.enabled = false;
+
             } else {
-                // Drone View
+                // Drone Orbit View
+                controls.target.copy(activeTrain.obj.position);
                 controls.enabled = true;
-                controls.update(); // Keep orbit rotating
+                controls.update();
             }
 
             renderer.render(scene, camera);
