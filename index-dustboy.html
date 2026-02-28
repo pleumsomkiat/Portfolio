@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ORACLE CORE: DustBoy Live Metrics</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: #030303;
+            color: #fff;
+        }
+
+        /* 3D Canvas */
+        #canvas-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+
+        /* UI Layer */
+        #ui-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 10;
+            pointer-events: none;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 30px;
+            box-sizing: border-box;
+        }
+
+        /* Header */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        .title-box {
+            background: rgba(10, 20, 30, 0.6);
+            border-left: 4px solid #00f3ff;
+            padding: 15px 25px;
+            backdrop-filter: blur(10px);
+            border-radius: 0 10px 10px 0;
+            box-shadow: 0 4px 30px rgba(0, 243, 255, 0.2);
+        }
+
+        h1 {
+            margin: 0;
+            font-size: 2rem;
+            font-weight: 300;
+            letter-spacing: 2px;
+            color: #fff;
+            text-transform: uppercase;
+        }
+
+        h1 span {
+            font-weight: 900;
+            color: #00f3ff;
+        }
+
+        .subtitle {
+            font-size: 0.9rem;
+            color: #88acc2;
+            margin-top: 5px;
+            letter-spacing: 1px;
+        }
+
+        .status-box {
+            background: rgba(10, 20, 30, 0.6);
+            padding: 10px 20px;
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border: 1px solid rgba(0, 243, 255, 0.3);
+        }
+
+        .pulse-dot {
+            width: 10px;
+            height: 10px;
+            background-color: #00ff00;
+            border-radius: 50%;
+            box-shadow: 0 0 10px #00ff00;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 0 0 0 rgba(0, 255, 0, 0.7);
+            }
+
+            70% {
+                box-shadow: 0 0 0 10px rgba(0, 255, 0, 0);
+            }
+
+            100% {
+                box-shadow: 0 0 0 0 rgba(0, 255, 0, 0);
+            }
+        }
+
+        #connection-status {
+            font-weight: bold;
+            font-size: 0.9rem;
+            letter-spacing: 1px;
+        }
+
+        /* Metrics Panels */
+        .metrics-container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            align-items: flex-end;
+        }
+
+        .metric-card {
+            background: rgba(5, 12, 20, 0.7);
+            border: 1px solid rgba(0, 243, 255, 0.2);
+            backdrop-filter: blur(12px);
+            border-radius: 12px;
+            padding: 20px;
+            min-width: 250px;
+            text-align: right;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .metric-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 4px;
+            height: 100%;
+            background: #00f3ff;
+        }
+
+        .metric-label {
+            font-size: 0.85rem;
+            color: #88acc2;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 5px;
+        }
+
+        .metric-value {
+            font-size: 2.8rem;
+            font-weight: 700;
+            color: #fff;
+            line-height: 1;
+            text-shadow: 0 0 20px rgba(0, 243, 255, 0.4);
+        }
+
+        .metric-unit {
+            font-size: 1rem;
+            color: #5a7d94;
+            font-weight: 400;
+            margin-left: 5px;
+        }
+
+        .metric-location {
+            font-size: 0.75rem;
+            color: #4a6d84;
+            margin-top: 8px;
+            font-style: italic;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 250px;
+        }
+
+        /* Chart Area */
+        .chart-container {
+            background: rgba(5, 12, 20, 0.7);
+            border: 1px solid rgba(0, 243, 255, 0.2);
+            backdrop-filter: blur(12px);
+            border-radius: 12px;
+            padding: 20px;
+            width: 100%;
+            max-width: 800px;
+            height: 250px;
+            align-self: center;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
+            position: relative;
+        }
+
+        .chart-title {
+            position: absolute;
+            top: -12px;
+            left: 30px;
+            background: #050c14;
+            padding: 0 15px;
+            color: #00f3ff;
+            font-size: 0.85rem;
+            font-weight: bold;
+            letter-spacing: 2px;
+            border: 1px solid rgba(0, 243, 255, 0.3);
+            border-radius: 15px;
+        }
+
+        /* Global Footer */
+        #global-footer {
+            position: fixed;
+            bottom: 10px;
+            right: 20px;
+            color: rgba(255, 255, 255, 0.3);
+            font-size: 11px;
+            z-index: 100;
+            letter-spacing: 1px;
+        }
+    </style>
+    <!-- Include Libraries -->
+    <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body>
+
+    <!-- 3D Background -->
+    <div id="canvas-container"></div>
+
+    <!-- UI Overlay -->
+    <div id="ui-layer">
+        <header>
+            <div class="title-box">
+                <h1>Oracle <span>Aerosol</span> Core</h1>
+                <div class="subtitle">LIVE MULTI-NODE SENSOR NETWORK</div>
+            </div>
+
+            <div class="metrics-container">
+                <div class="status-box">
+                    <div class="pulse-dot" id="socket-dot"></div>
+                    <span id="connection-status">CONNECTING...</span>
+                </div>
+
+                <div class="metric-card" id="card-pm25">
+                    <div class="metric-label">PM 2.5 (Latest)</div>
+                    <div class="metric-value"><span id="val-pm25">--</span><span class="metric-unit">µg/m³</span></div>
+                    <div class="metric-location" id="loc-pm25">Waiting for data stream...</div>
+                </div>
+
+                <div class="metric-card" id="card-temp">
+                    <div class="metric-label">Temperature</div>
+                    <div class="metric-value"><span id="val-temp">--</span><span class="metric-unit">°C</span></div>
+                    <div class="metric-location" id="loc-temp">Waiting for data stream...</div>
+                </div>
+
+                <div class="metric-card" id="card-humid">
+                    <div class="metric-label">Humidity</div>
+                    <div class="metric-value"><span id="val-humid">--</span><span class="metric-unit">%</span></div>
+                    <div class="metric-location" id="loc-humid">Waiting for data stream...</div>
+                </div>
+            </div>
+        </header>
+
+        <div class="chart-container">
+            <div class="chart-title">REAL-TIME PM2.5 TELEMETRY</div>
+            <canvas id="pmChart"></canvas>
+        </div>
+    </div>
+
+    <div id="global-footer">ENGINEERED BY KIKI ORACLE</div>
+
+    <!-- Three.js Module -->
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.160.0/build/three.module.js"
+            }
+        }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+
+        // --- 1. THREE.JS FUTURISTIC SCENE ---
+        const container = document.getElementById('canvas-container');
+        const scene = new THREE.Scene();
+        scene.fog = new THREE.FogExp2(0x030303, 0.001);
+
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 2000);
+        camera.position.z = 400;
+        camera.position.y = 100;
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        container.appendChild(renderer.domElement);
+
+        // Holographic Core (Sphere)
+        const coreGeo = new THREE.IcosahedronGeometry(80, 2);
+        const coreMat = new THREE.MeshBasicMaterial({
+            color: 0x00f3ff,
+            wireframe: true,
+            transparent: true,
+            opacity: 0.2
+        });
+        const core = new THREE.Mesh(coreGeo, coreMat);
+        scene.add(core);
+
+        // Inner glowing core
+        const innerGeo = new THREE.IcosahedronGeometry(75, 4);
+        const innerMat = new THREE.MeshPhongMaterial({
+            color: 0x0088ff,
+            emissive: 0x0044aa,
+            wireframe: false,
+            flatShading: true
+        });
+        const innerCore = new THREE.Mesh(innerGeo, innerMat);
+        scene.add(innerCore);
+
+        // Data Particles System
+        const particleCount = 3000;
+        const particlesGeo = new THREE.BufferGeometry();
+        const positions = new Float32Array(particleCount * 3);
+        const vels = [];
+
+        for (let i = 0; i < particleCount; i++) {
+            const x = (Math.random() - 0.5) * 1000;
+            const y = (Math.random() - 0.5) * 1000;
+            const z = (Math.random() - 0.5) * 1000;
+            positions[i * 3] = x;
+            positions[i * 3 + 1] = y;
+            positions[i * 3 + 2] = z;
+            vels.push({
+                x: (Math.random() - 0.5) * 0.5,
+                y: (Math.random() - 0.5) * 0.5,
+                z: (Math.random() - 0.5) * 0.5
+            });
+        }
+        particlesGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+
+        // Custom texture for soft particles
+        const canvas = document.createElement('canvas');
+        canvas.width = 16; canvas.height = 16;
+        const context = canvas.getContext('2d');
+        const gradient = context.createRadialGradient(8, 8, 0, 8, 8, 8);
+        gradient.addColorStop(0, 'rgba(0,243,255,1)');
+        gradient.addColorStop(1, 'rgba(0,0,0,0)');
+        context.fillStyle = gradient;
+        context.fillRect(0, 0, 16, 16);
+        const particleTex = new THREE.CanvasTexture(canvas);
+
+        const particlesMat = new THREE.PointsMaterial({
+            color: 0xffffff,
+            size: 6,
+            map: particleTex,
+            transparent: true,
+            blending: THREE.AdditiveBlending,
+            depthWrite: false
+        });
+        const particles = new THREE.Points(particlesGeo, particlesMat);
+        scene.add(particles);
+
+        // Lights
+        const light = new THREE.PointLight(0x00f3ff, 2, 500);
+        light.position.set(0, 0, 0);
+        scene.add(light);
+
+        const ambient = new THREE.AmbientLight(0xffffff, 0.1);
+        scene.add(ambient);
+
+        // Grid Floor
+        const grid = new THREE.GridHelper(2000, 40, 0x00f3ff, 0x002244);
+        grid.position.y = -200;
+        grid.material.transparent = true;
+        grid.material.opacity = 0.3;
+        scene.add(grid);
+
+        // Animation/Pulse effect variables
+        let targetScale = 1;
+        let currentScale = 1;
+        let time = 0;
+
+        function animate() {
+            requestAnimationFrame(animate);
+            time += 0.005;
+
+            // Rotate core
+            core.rotation.y += 0.002;
+            core.rotation.x += 0.001;
+            innerCore.rotation.y -= 0.001;
+
+            // Floating effect
+            core.position.y = Math.sin(time * 5) * 20;
+            innerCore.position.y = Math.sin(time * 5) * 20;
+
+            // Pulse effect lerp
+            currentScale += (targetScale - currentScale) * 0.1;
+            core.scale.set(currentScale, currentScale, currentScale);
+            innerCore.scale.set(currentScale * 0.9, currentScale * 0.9, currentScale * 0.9);
+
+            // Return scale to normal
+            if (targetScale > 1) {
+                targetScale -= 0.05;
+            }
+
+            // Move particles slowly, orbiting center
+            const positions = particles.geometry.attributes.position.array;
+            for (let i = 0; i < particleCount; i++) {
+                let px = positions[i * 3];
+                let py = positions[i * 3 + 1];
+                let pz = positions[i * 3 + 2];
+                let dist = Math.sqrt(px * px + py * py + pz * pz);
+
+                // Slow rotation around center
+                let angle = Math.atan2(pz, px);
+                angle += 0.001;
+
+                // Add noise vector
+                positions[i * 3] = dist * Math.cos(angle) + vels[i].x;
+                positions[i * 3 + 1] += vels[i].y;
+                positions[i * 3 + 2] = dist * Math.sin(angle) + vels[i].z;
+
+                // Wrap around bounds
+                if (positions[i * 3 + 1] > 500) positions[i * 3 + 1] = -500;
+                if (positions[i * 3 + 1] < -500) positions[i * 3 + 1] = 500;
+            }
+            particles.geometry.attributes.position.needsUpdate = true;
+
+            // Camera subtle sway
+            camera.position.x = Math.sin(time) * 100;
+            camera.lookAt(scene.position);
+
+            renderer.render(scene, camera);
+        }
+        animate();
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        // Effect function exported to be triggered by data
+        window.triggerDataPulse = (intensity) => {
+            // intensity from 0 to 1 based on PM2.5 level
+            targetScale = 1.2 + (intensity * 0.5);
+            // Change color temporarily based on severity
+            let colorHex = 0x00f3ff; // Good (Blue/Cyan)
+            if (intensity > 0.3) colorHex = 0xffaa00; // Moderate (Orange)
+            if (intensity > 0.6) colorHex = 0xff0000; // Unhealthy (Red)
+
+            coreMat.color.setHex(colorHex);
+            light.color.setHex(colorHex);
+
+            // Reset color slowly via setTimeout
+            setTimeout(() => {
+                coreMat.color.setHex(0x00f3ff);
+                light.color.setHex(0x00f3ff);
+            }, 1000);
+        };
+
+
+        // --- 2. CHART.JS SETUP ---
+        Chart.defaults.color = '#88acc2';
+        Chart.defaults.font.family = "'Segoe UI', sans-serif";
+
+        const ctxChart = document.getElementById('pmChart').getContext('2d');
+        const gradientLine = ctxChart.createLinearGradient(0, 0, 0, 400);
+        gradientLine.addColorStop(0, 'rgba(0, 243, 255, 1)');
+        gradientLine.addColorStop(1, 'rgba(0, 243, 255, 0.0)');
+
+        const pmChart = new Chart(ctxChart, {
+            type: 'line',
+            data: {
+                labels: [], // Timestamps
+                datasets: [{
+                    label: 'PM 2.5 (µg/m³)',
+                    data: [],
+                    borderColor: '#00f3ff',
+                    borderWidth: 2,
+                    backgroundColor: gradientLine,
+                    fill: true,
+                    tension: 0.4, // Smooth Spline curve
+                    pointRadius: 0,
+                    pointHoverRadius: 6
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                animation: { duration: 400 },
+                scales: {
+                    x: {
+                        grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                        ticks: { maxTicksLimit: 10 }
+                    },
+                    y: {
+                        grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                        beginAtZero: true,
+                        suggestedMax: 100
+                    }
+                },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: 'rgba(0,0,0,0.8)',
+                        titleColor: '#00f3ff',
+                        borderColor: '#00f3ff',
+                        borderWidth: 1
+                    }
+                }
+            }
+        });
+
+        const maxDataPoints = 40;
+
+
+        // --- 3. MQTT.JS INTEGRATION ---
+        const statusEl = document.getElementById('connection-status');
+        const dotEl = document.getElementById('socket-dot');
+
+        // DOM Elements for Metrics
+        const valPm25 = document.getElementById('val-pm25');
+        const valTemp = document.getElementById('val-temp');
+        const valHumid = document.getElementById('val-humid');
+        const locPm25 = document.getElementById('loc-pm25');
+        const locTemp = document.getElementById('loc-temp');
+        const locHumid = document.getElementById('loc-humid');
+
+        const cardPm25 = document.getElementById('card-pm25');
+
+        // Connect to given DustBoy endpoint
+        const client = mqtt.connect('wss://dustboy-wss-bridge.laris.workers.dev/mqtt');
+
+        client.on('connect', () => {
+            statusEl.innerText = "LINK ESTABLISHED";
+            statusEl.style.color = "#00f3ff";
+            dotEl.style.backgroundColor = "#00f3ff";
+            dotEl.style.boxShadow = "0 0 10px #00f3ff";
+
+            // Subscribe to wildcard status
+            client.subscribe('DUSTBOY/+/+/+/status');
+            console.log("MQTT Connected & Subscribed to DUSTBOY/+/+/+/status");
+        });
+
+        client.on('error', (err) => {
+            statusEl.innerText = "CONNECTION FAILED";
+            statusEl.style.color = "#ff0000";
+            dotEl.style.backgroundColor = "#ff0000";
+        });
+
+        client.on('message', (topic, message) => {
+            try {
+                const payloadStr = message.toString();
+                // Check if it's JSON (sometimes raw string)
+                if (payloadStr.startsWith('{')) {
+                    const data = JSON.parse(payloadStr);
+
+                    // DustBoy format often has data inside payload or directly
+                    const pm25 = data.pm25 || data.pm2_5 || data.pm || 0;
+                    const pm10 = data.pm10 || 0;
+                    const temp = data.temp || data.temperature || data.t || 0;
+                    const humid = data.humid || data.humidity || data.h || 0;
+                    const locName = data.name || data.location || topic;
+
+                    // Update UI Only if we have valid-ish pm25
+                    if (pm25 !== undefined) {
+                        valPm25.innerText = parseFloat(pm25).toFixed(1);
+                        valTemp.innerText = parseFloat(temp).toFixed(1);
+                        valHumid.innerText = parseFloat(humid).toFixed(1);
+
+                        let shortLoc = topic.split('/').slice(1, 3).join('/') || locName;
+                        locPm25.innerText = `NODE: ${shortLoc}`;
+                        locTemp.innerText = `NODE: ${shortLoc}`;
+                        locHumid.innerText = `NODE: ${shortLoc}`;
+
+                        // Change card color based on AQI logic (simplified)
+                        let borderColor = '#00f3ff';
+                        let intensity = 0;
+                        if (pm25 > 35) { borderColor = '#ffaa00'; intensity = 0.5; } // Warning
+                        if (pm25 > 55) { borderColor = '#ff0000'; intensity = 1.0; } // Danger
+
+                        cardPm25.style.borderColor = borderColor;
+                        valPm25.style.textShadow = `0 0 20px ${borderColor}80`;
+                        cardPm25.style.boxShadow = `0 10px 30px ${borderColor}40`;
+
+                        // Trigger 3D pulse
+                        if (window.triggerDataPulse) window.triggerDataPulse(intensity);
+
+                        // Update Chart
+                        const now = new Date();
+                        const timeStr = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`;
+
+                        pmChart.data.labels.push(timeStr);
+                        pmChart.data.datasets[0].data.push(pm25);
+
+                        if (pmChart.data.labels.length > maxDataPoints) {
+                            pmChart.data.labels.shift();
+                            pmChart.data.datasets[0].data.shift();
+                        }
+                        pmChart.update('none'); // Update without full animation for performance
+                    }
+                }
+            } catch (e) {
+                console.warn("Could not parse MQTT message:", message.toString());
+            }
+        });
+
+    </script>
+</body>
+
+</html>
