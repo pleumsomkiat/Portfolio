@@ -237,7 +237,7 @@
         <header>
             <div class="title-box">
                 <h1>Thai <span>Environment</span> Core</h1>
-                <div class="subtitle">TMD & OPEN-METEO DATA STREAM</div>
+                <div class="subtitle">77 PROVINCES NODE NETWORK</div>
             </div>
 
             <div class="metrics-container">
@@ -278,99 +278,128 @@
     <script type="importmap">
         {
             "imports": {
-                "three": "https://unpkg.com/three@0.160.0/build/three.module.js"
+                "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+                "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
             }
         }
     </script>
 
     <script type="module">
         import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
-        // --- 1. THREE.JS FUTURISTIC SCENE ---
+        // --- 1. THREE.JS ATOM NODE SCENE ---
         const container = document.getElementById('canvas-container');
         const scene = new THREE.Scene();
         scene.fog = new THREE.FogExp2(0x030303, 0.001);
 
         const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 2000);
-        camera.position.z = 400;
-        camera.position.y = 100;
+        camera.position.z = 300;
+        camera.position.y = 50;
 
         const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
         renderer.setPixelRatio(window.devicePixelRatio);
         container.appendChild(renderer.domElement);
 
-        // Holographic Core (Sphere)
-        const coreGeo = new THREE.IcosahedronGeometry(80, 2);
-        const coreMat = new THREE.MeshBasicMaterial({
+        const controls = new OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.autoRotate = true;
+        controls.autoRotateSpeed = 1.0;
+
+        const networkGroup = new THREE.Group();
+        scene.add(networkGroup);
+
+        // 77 Provinces Array (Approximate Coordinates)
+        const thaiProvinces = [
+            { name: "Bangkok", lat: 13.75, lon: 100.50 }, { name: "Samut Prakan", lat: 13.60, lon: 100.60 }, { name: "Nonthaburi", lat: 13.86, lon: 100.53 }, { name: "Pathum Thani", lat: 14.02, lon: 100.53 }, { name: "Phra Nakhon Si Ayutthaya", lat: 14.35, lon: 100.57 }, { name: "Ang Thong", lat: 14.59, lon: 100.45 }, { name: "Lop Buri", lat: 14.80, lon: 100.62 }, { name: "Sing Buri", lat: 14.89, lon: 100.40 }, { name: "Chai Nat", lat: 15.18, lon: 100.12 }, { name: "Saraburi", lat: 14.53, lon: 100.91 }, { name: "Chon Buri", lat: 13.36, lon: 100.98 }, { name: "Rayong", lat: 12.68, lon: 101.28 }, { name: "Chanthaburi", lat: 12.61, lon: 102.10 }, { name: "Trat", lat: 12.24, lon: 102.51 }, { name: "Chachoengsao", lat: 13.69, lon: 101.07 }, { name: "Prachin Buri", lat: 14.05, lon: 101.37 }, { name: "Nakhon Nayok", lat: 14.20, lon: 101.21 }, { name: "Sa Kaeo", lat: 13.82, lon: 102.07 }, { name: "Nakhon Ratchasima", lat: 14.97, lon: 102.10 }, { name: "Buri Ram", lat: 14.99, lon: 103.10 }, { name: "Surin", lat: 14.88, lon: 103.49 }, { name: "Si Sa Ket", lat: 15.12, lon: 104.33 }, { name: "Ubon Ratchathani", lat: 15.24, lon: 104.85 }, { name: "Yasothon", lat: 15.79, lon: 104.14 }, { name: "Chaiyaphum", lat: 15.81, lon: 102.03 }, { name: "Amnat Charoen", lat: 15.86, lon: 104.63 }, { name: "Nong Bua Lam Phu", lat: 17.20, lon: 102.44 }, { name: "Khon Kaen", lat: 16.43, lon: 102.83 }, { name: "Udon Thani", lat: 17.41, lon: 102.79 }, { name: "Loei", lat: 17.49, lon: 101.73 }, { name: "Nong Khai", lat: 17.88, lon: 102.74 }, { name: "Maha Sarakham", lat: 16.18, lon: 103.30 }, { name: "Roi Et", lat: 16.05, lon: 103.65 }, { name: "Kalasin", lat: 16.43, lon: 103.51 }, { name: "Sakon Nakhon", lat: 17.16, lon: 104.15 }, { name: "Nakhon Phanom", lat: 17.40, lon: 104.78 }, { name: "Mukdahan", lat: 16.54, lon: 104.72 }, { name: "Chiang Mai", lat: 18.79, lon: 98.98 }, { name: "Lamphun", lat: 18.57, lon: 99.01 }, { name: "Lampang", lat: 18.29, lon: 99.49 }, { name: "Uttaradit", lat: 17.62, lon: 100.09 }, { name: "Phrae", lat: 18.14, lon: 100.14 }, { name: "Nan", lat: 18.78, lon: 100.77 }, { name: "Phayao", lat: 19.16, lon: 99.90 }, { name: "Chiang Rai", lat: 19.91, lon: 99.83 }, { name: "Mae Hong Son", lat: 19.30, lon: 97.96 }, { name: "Nakhon Sawan", lat: 15.69, lon: 100.12 }, { name: "Uthai Thani", lat: 15.38, lon: 100.02 }, { name: "Kamphaeng Phet", lat: 16.48, lon: 99.52 }, { name: "Tak", lat: 16.89, lon: 99.12 }, { name: "Sukhothai", lat: 17.01, lon: 99.82 }, { name: "Phitsanulok", lat: 16.82, lon: 100.26 }, { name: "Phichit", lat: 16.44, lon: 100.35 }, { name: "Phetchabun", lat: 16.42, lon: 101.16 }, { name: "Ratchaburi", lat: 13.53, lon: 99.81 }, { name: "Kanchanaburi", lat: 14.00, lon: 99.53 }, { name: "Suphan Buri", lat: 14.47, lon: 100.12 }, { name: "Nakhon Pathom", lat: 13.82, lon: 100.06 }, { name: "Samut Sakhon", lat: 13.55, lon: 100.27 }, { name: "Samut Songkhram", lat: 13.41, lon: 100.00 }, { name: "Phetchaburi", lat: 13.11, lon: 99.94 }, { name: "Prachuap Khiri Khan", lat: 11.81, lon: 99.80 }, { name: "Nakhon Si Thammarat", lat: 8.43, lon: 99.96 }, { name: "Krabi", lat: 8.06, lon: 98.92 }, { name: "Phangnga", lat: 8.45, lon: 98.53 }, { name: "Phuket", lat: 7.98, lon: 98.33 }, { name: "Surat Thani", lat: 9.14, lon: 99.33 }, { name: "Ranong", lat: 9.96, lon: 98.63 }, { name: "Chumphon", lat: 10.49, lon: 99.18 }, { name: "Songkhla", lat: 7.19, lon: 100.59 }, { name: "Satun", lat: 6.62, lon: 100.07 }, { name: "Trang", lat: 7.55, lon: 99.61 }, { name: "Phatthalung", lat: 7.61, lon: 100.07 }, { name: "Pattani", lat: 6.86, lon: 101.25 }, { name: "Yala", lat: 6.54, lon: 101.28 }, { name: "Narathiwat", lat: 6.42, lon: 101.82 }, { name: "Bueng Kan", lat: 18.36, lon: 103.65 }
+        ];
+
+        const atoms = [];
+        const lines = [];
+        const numAtoms = thaiProvinces.length; // 77
+        const sphereRadius = 140;
+
+        // Create Atoms using Fibonacci Sphere Algorithm
+        const minScale = 1;
+        const maxScale = 1.5;
+        const atomGeo = new THREE.SphereGeometry(6, 16, 16);
+
+        for (let i = 0; i < numAtoms; i++) {
+            const phi = Math.acos(-1 + (2 * i) / numAtoms);
+            const theta = Math.sqrt(numAtoms * Math.PI) * phi;
+
+            const x = sphereRadius * Math.cos(theta) * Math.sin(phi);
+            const y = sphereRadius * Math.sin(theta) * Math.sin(phi);
+            const z = sphereRadius * Math.cos(phi);
+
+            const mat = new THREE.MeshPhongMaterial({
+                color: 0x00f3ff,
+                emissive: 0x0044aa,
+                shininess: 100,
+                transparent: true,
+                opacity: 0.95
+            });
+
+            const atom = new THREE.Mesh(atomGeo, mat);
+            atom.position.set(x, y, z);
+
+            // Add province metadata to the mesh
+            atom.userData = {
+                id: i,
+                province: thaiProvinces[i].name,
+                lat: thaiProvinces[i].lat,
+                lon: thaiProvinces[i].lon,
+                pm25: 0,
+                temp: 0,
+                aod: 0,
+                baseScale: Math.random() * (maxScale - minScale) + minScale
+            };
+
+            atom.scale.setScalar(atom.userData.baseScale);
+            atoms.push(atom);
+            networkGroup.add(atom);
+        }
+
+        // Connect Atoms with lines (Molecular structure)
+        const lineMat = new THREE.LineBasicMaterial({
             color: 0x00f3ff,
-            wireframe: true,
             transparent: true,
             opacity: 0.2
         });
-        const core = new THREE.Mesh(coreGeo, coreMat);
-        scene.add(core);
+
+        const maxDist = 70; // Distance threshold for bonding
+        for (let i = 0; i < numAtoms; i++) {
+            for (let j = i + 1; j < numAtoms; j++) {
+                const dist = atoms[i].position.distanceTo(atoms[j].position);
+                if (dist < maxDist) {
+                    const lineGeo = new THREE.BufferGeometry().setFromPoints([atoms[i].position, atoms[j].position]);
+                    const line = new THREE.Line(lineGeo, lineMat.clone());
+                    // Keep references to connected nodes for line coloring later
+                    line.userData = { aId: i, bId: j };
+                    networkGroup.add(line);
+                    lines.push(line);
+                }
+            }
+        }
 
         // Inner glowing core
-        const innerGeo = new THREE.IcosahedronGeometry(75, 4);
-        const innerMat = new THREE.MeshPhongMaterial({
-            color: 0x0088ff,
-            emissive: 0x0044aa,
-            wireframe: false,
-            flatShading: true
+        const innerGeo = new THREE.IcosahedronGeometry(60, 2);
+        const innerMat = new THREE.MeshBasicMaterial({
+            color: 0x0044aa,
+            wireframe: true,
+            transparent: true,
+            opacity: 0.15
         });
         const innerCore = new THREE.Mesh(innerGeo, innerMat);
-        scene.add(innerCore);
-
-        // Data Particles System
-        const particleCount = 3000;
-        const particlesGeo = new THREE.BufferGeometry();
-        const positions = new Float32Array(particleCount * 3);
-        const vels = [];
-
-        for (let i = 0; i < particleCount; i++) {
-            const x = (Math.random() - 0.5) * 1000;
-            const y = (Math.random() - 0.5) * 1000;
-            const z = (Math.random() - 0.5) * 1000;
-            positions[i * 3] = x;
-            positions[i * 3 + 1] = y;
-            positions[i * 3 + 2] = z;
-            vels.push({
-                x: (Math.random() - 0.5) * 0.5,
-                y: (Math.random() - 0.5) * 0.5,
-                z: (Math.random() - 0.5) * 0.5
-            });
-        }
-        particlesGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-
-        // Custom texture for soft particles
-        const canvas = document.createElement('canvas');
-        canvas.width = 16; canvas.height = 16;
-        const context = canvas.getContext('2d');
-        const gradient = context.createRadialGradient(8, 8, 0, 8, 8, 8);
-        gradient.addColorStop(0, 'rgba(0,243,255,1)');
-        gradient.addColorStop(1, 'rgba(0,0,0,0)');
-        context.fillStyle = gradient;
-        context.fillRect(0, 0, 16, 16);
-        const particleTex = new THREE.CanvasTexture(canvas);
-
-        const particlesMat = new THREE.PointsMaterial({
-            color: 0xffffff,
-            size: 6,
-            map: particleTex,
-            transparent: true,
-            blending: THREE.AdditiveBlending,
-            depthWrite: false
-        });
-        const particles = new THREE.Points(particlesGeo, particlesMat);
-        scene.add(particles);
+        networkGroup.add(innerCore);
 
         // Lights
-        const light = new THREE.PointLight(0x00f3ff, 2, 500);
+        const light = new THREE.PointLight(0xffffff, 1, 500);
         light.position.set(0, 0, 0);
-        scene.add(light);
+        networkGroup.add(light);
 
-        const ambient = new THREE.AmbientLight(0xffffff, 0.1);
+        const ambient = new THREE.AmbientLight(0xffffff, 0.4);
         scene.add(ambient);
 
         // Grid Floor
@@ -380,88 +409,20 @@
         grid.material.opacity = 0.3;
         scene.add(grid);
 
-        // Animation/Pulse effect variables
-        let targetScale = 1;
-        let currentScale = 1;
-        let time = 0;
+        // Raycaster for Hover Interaction
+        const raycaster = new THREE.Raycaster();
+        const mouse = new THREE.Vector2(-10, -10); // Start offscreen
+        let hoveredAtom = null;
+        let selectedProvinceIndex = -1;
 
-        function animate() {
-            requestAnimationFrame(animate);
-            time += 0.005;
-
-            // Rotate core
-            core.rotation.y += 0.002;
-            core.rotation.x += 0.001;
-            innerCore.rotation.y -= 0.001;
-
-            // Floating effect
-            core.position.y = Math.sin(time * 5) * 20;
-            innerCore.position.y = Math.sin(time * 5) * 20;
-
-            // Pulse effect lerp
-            currentScale += (targetScale - currentScale) * 0.1;
-            core.scale.set(currentScale, currentScale, currentScale);
-            innerCore.scale.set(currentScale * 0.9, currentScale * 0.9, currentScale * 0.9);
-
-            // Return scale to normal
-            if (targetScale > 1) {
-                targetScale -= 0.05;
-            }
-
-            // Move particles slowly, orbiting center
-            const positions = particles.geometry.attributes.position.array;
-            for (let i = 0; i < particleCount; i++) {
-                let px = positions[i * 3];
-                let py = positions[i * 3 + 1];
-                let pz = positions[i * 3 + 2];
-                let dist = Math.sqrt(px * px + py * py + pz * pz);
-
-                // Slow rotation around center
-                let angle = Math.atan2(pz, px);
-                angle += 0.001;
-
-                // Add noise vector
-                positions[i * 3] = dist * Math.cos(angle) + vels[i].x;
-                positions[i * 3 + 1] += vels[i].y;
-                positions[i * 3 + 2] = dist * Math.sin(angle) + vels[i].z;
-
-                // Wrap around bounds
-                if (positions[i * 3 + 1] > 500) positions[i * 3 + 1] = -500;
-                if (positions[i * 3 + 1] < -500) positions[i * 3 + 1] = 500;
-            }
-            particles.geometry.attributes.position.needsUpdate = true;
-
-            // Camera subtle sway
-            camera.position.x = Math.sin(time) * 100;
-            camera.lookAt(scene.position);
-
-            renderer.render(scene, camera);
-        }
-        animate();
-
-        window.addEventListener('resize', () => {
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(window.innerWidth, window.innerHeight);
+        window.addEventListener('mousemove', (event) => {
+            mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
         });
 
         // Effect function exported to be triggered by data
         window.triggerDataPulse = (intensity) => {
-            // intensity from 0 to 1 based on PM2.5 level
-            targetScale = 1.2 + (intensity * 0.5);
-            // Change color temporarily based on severity
-            let colorHex = 0x00f3ff; // Good (Blue/Cyan)
-            if (intensity > 0.3) colorHex = 0xffaa00; // Moderate (Orange)
-            if (intensity > 0.6) colorHex = 0xff0000; // Unhealthy (Red)
-
-            coreMat.color.setHex(colorHex);
-            light.color.setHex(colorHex);
-
-            // Reset color slowly via setTimeout
-            setTimeout(() => {
-                coreMat.color.setHex(0x00f3ff);
-                light.color.setHex(0x00f3ff);
-            }, 1000);
+            // Unused in atom node version, kept for compatibility
         };
 
 
@@ -477,7 +438,7 @@
         const pmChart = new Chart(ctxChart, {
             type: 'line',
             data: {
-                labels: [], // Timestamps
+                labels: [],
                 datasets: [{
                     label: 'PM 2.5 (µg/m³)',
                     data: [],
@@ -485,7 +446,7 @@
                     borderWidth: 2,
                     backgroundColor: gradientLine,
                     fill: true,
-                    tension: 0.4, // Smooth Spline curve
+                    tension: 0.4,
                     pointRadius: 0,
                     pointHoverRadius: 6
                 }]
@@ -520,117 +481,202 @@
         const maxDataPoints = 40;
 
 
-        // --- 3. WEATHER / AIR QUALITY API INTEGRATION (TMD/OPEN-METEO) ---
+        // --- 3. WEATHER / AIR QUALITY API INTEGRATION ---
         const statusEl = document.getElementById('connection-status');
         const dotEl = document.getElementById('socket-dot');
 
-        // DOM Elements for Metrics
         const valPm25 = document.getElementById('val-pm25');
         const valTemp = document.getElementById('val-temp');
         const valHumid = document.getElementById('val-humid');
         const locPm25 = document.getElementById('loc-pm25');
         const locTemp = document.getElementById('loc-temp');
         const locHumid = document.getElementById('loc-humid');
-
         const cardPm25 = document.getElementById('card-pm25');
 
-        // Locations in Thailand
-        const locations = [
-            { name: "Bangkok (BKK)", lat: 13.75, lon: 100.51 },
-            { name: "Chiang Mai (CNX)", lat: 18.79, lon: 98.98 },
-            { name: "Phuket (HKT)", lat: 7.98, lon: 98.33 }
-        ];
-
-        let currentLocationIdx = 0;
-        let basePm25 = 0;
-        let baseTemp = 0;
-        let baseAod = 0;
-        let currentLocName = "";
-
-        // Fetch Data from Open-Meteo Air Quality & Weather API
-        async function fetchWeatherData() {
+        // Fetch Data for ALL 77 Atoms
+        async function fetchAllProvincesData() {
             try {
-                const loc = locations[currentLocationIdx];
-                currentLocName = loc.name;
-                statusEl.innerText = "FETCHING DATA...";
+                statusEl.innerText = "LINKING 77 NODES...";
+                statusEl.style.color = "#ffaa00";
 
-                // Fetch Air Quality
-                const aqRes = await fetch(`https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${loc.lat}&longitude=${loc.lon}&current=pm10,pm2_5,aerosol_optical_depth&timezone=Asia%2FBangkok`);
+                const lats = thaiProvinces.map(p => p.lat.toFixed(2)).join(',');
+                const lons = thaiProvinces.map(p => p.lon.toFixed(2)).join(',');
+
+                // Fetch AQI
+                const aqRes = await fetch(`https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${lats}&longitude=${lons}&current=pm2_5,aerosol_optical_depth&timezone=Asia%2FBangkok`);
                 const aqData = await aqRes.json();
 
-                // Fetch Weather (Temp)
-                const weatherRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${loc.lat}&longitude=${loc.lon}&current=temperature_2m&timezone=Asia%2FBangkok`);
-                const weatherData = await weatherRes.json();
+                // Fetch Weather
+                const wRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lats}&longitude=${lons}&current=temperature_2m&timezone=Asia%2FBangkok`);
+                const wData = await wRes.json();
 
-                basePm25 = aqData.current.pm2_5 || 0;
-                baseAod = aqData.current.aerosol_optical_depth || 0;
-                baseTemp = weatherData.current.temperature_2m || 0;
+                let maxPm25 = 0;
 
-                statusEl.innerText = "SAT-LINK ACTIVE";
+                // Open-Meteo returns array of responses when multiple coords are sent
+                const aqArray = Array.isArray(aqData) ? aqData : (aqData.value || [aqData]);
+                const wArray = Array.isArray(wData) ? wData : (wData.value || [wData]);
+
+                // Sync data to atoms
+                for (let i = 0; i < numAtoms; i++) {
+                    const nodeAq = aqArray[i] ? aqArray[i].current : null;
+                    const nodeW = wArray[i] ? wArray[i].current : null;
+
+                    const pm25 = nodeAq ? (nodeAq.pm2_5 || 0) : 0;
+                    const temp = nodeW ? (nodeW.temperature_2m || 0) : 0;
+                    const aod = nodeAq ? (nodeAq.aerosol_optical_depth || 0) : 0;
+
+                    atoms[i].userData.pm25 = pm25;
+                    atoms[i].userData.temp = temp;
+                    atoms[i].userData.aod = aod;
+
+                    if (pm25 > maxPm25) maxPm25 = pm25;
+
+                    // Color based on PM2.5 severity
+                    let colorHex = 0x00f3ff; // Cyan
+                    let emHex = 0x0044aa;
+                    if (pm25 > 35) { colorHex = 0xffaa00; emHex = 0xaa5500; } // Yellow
+                    if (pm25 > 55) { colorHex = 0xff3300; emHex = 0xaa1100; } // Red
+                    if (pm25 > 100) { colorHex = 0xaa00bb; emHex = 0x550055; } // Purple
+
+                    atoms[i].material.color.setHex(colorHex);
+                    atoms[i].material.emissive.setHex(emHex);
+                }
+
+                // Update connecting lines colors
+                lines.forEach(line => {
+                    const aId = line.userData.aId;
+                    const bId = line.userData.bId;
+                    const pm25Avg = (atoms[aId].userData.pm25 + atoms[bId].userData.pm25) / 2;
+                    let colorHex = 0x00f3ff;
+                    if (pm25Avg > 35) colorHex = 0xffaa00;
+                    if (pm25Avg > 55) colorHex = 0xff3300;
+                    line.material.color.setHex(colorHex);
+                });
+
+                statusEl.innerText = "SAT-LINK SECURE";
                 statusEl.style.color = "#00f3ff";
                 dotEl.style.backgroundColor = "#00f3ff";
 
-                // Cycle location every 15 seconds
-                currentLocationIdx = (currentLocationIdx + 1) % locations.length;
+                // Auto-select Bangkok or Highest PM2.5 if nothing selected
+                if (selectedProvinceIndex === -1) {
+                    selectedProvinceIndex = 0; // BKK
+                    updateDashboardUI(atoms[selectedProvinceIndex].userData);
+                }
+
             } catch (err) {
                 console.error("API Error:", err);
-                statusEl.innerText = "CONNECTION FAILED";
+                statusEl.innerText = "NETWORK FAILURE";
                 statusEl.style.color = "#ff0000";
                 dotEl.style.backgroundColor = "#ff0000";
             }
         }
 
-        // Simulate Real-time telemetry fluctuations based on fetched base data
-        function updateTelemetry() {
-            if (basePm25 === 0) return; // Wait for initial fetch
+        // Update UI when hovering an atom
+        function updateDashboardUI(data) {
+            valPm25.innerText = data.pm25.toFixed(1);
+            valTemp.innerText = data.temp.toFixed(1);
+            valHumid.innerText = data.aod.toFixed(2);
 
-            // Add slight noise to simulate live sensors
-            const livePm25 = Math.max(0, basePm25 + (Math.random() * 2 - 1));
-            const liveTemp = baseTemp + (Math.random() * 0.2 - 0.1);
-            const liveAod = Math.max(0, baseAod + (Math.random() * 0.02 - 0.01));
+            locPm25.innerText = `NODE: ${data.province} (Lat: ${data.lat})`;
+            locTemp.innerText = `NODE: ${data.province}`;
+            locHumid.innerText = `NODE: ${data.province}`;
 
-            valPm25.innerText = livePm25.toFixed(1);
-            valTemp.innerText = liveTemp.toFixed(1);
-            valHumid.innerText = liveAod.toFixed(2);
-
-            locPm25.innerText = `NODE: ${currentLocName}`;
-            locTemp.innerText = `NODE: ${currentLocName}`;
-            locHumid.innerText = `NODE: ${currentLocName}`;
-
-            // Determine Severity Color
+            // Determine Severity Color for Card
             let borderColor = '#00f3ff';
-            let intensity = 0;
-            if (livePm25 > 35) { borderColor = '#ffaa00'; intensity = 0.5; } // Warning
-            if (livePm25 > 55) { borderColor = '#ff0000'; intensity = 1.0; } // Danger
-            if (livePm25 > 100) { borderColor = '#aa00ff'; intensity = 1.5; } // Hazardous
+            if (data.pm25 > 35) { borderColor = '#ffaa00'; }
+            if (data.pm25 > 55) { borderColor = '#ff0000'; }
+            if (data.pm25 > 100) { borderColor = '#aa00ff'; }
 
             cardPm25.style.borderColor = borderColor;
             valPm25.style.textShadow = `0 0 20px ${borderColor}80`;
             cardPm25.style.boxShadow = `0 10px 30px ${borderColor}40`;
-
-            // Trigger 3D pulse based on PM2.5 severity
-            if (window.triggerDataPulse && Math.random() > 0.5) {
-                window.triggerDataPulse(intensity);
-            }
 
             // Update Chart
             const now = new Date();
             const timeStr = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`;
 
             pmChart.data.labels.push(timeStr);
-            pmChart.data.datasets[0].data.push(livePm25);
+            pmChart.data.datasets[0].data.push(data.pm25);
 
             if (pmChart.data.labels.length > maxDataPoints) {
                 pmChart.data.labels.shift();
                 pmChart.data.datasets[0].data.shift();
             }
-            pmChart.update('none'); // Silent update
+            pmChart.update('none');
+        }
+
+        // Auto Cycle if not hovering
+        function autoCycleParams() {
+            if (!hoveredAtom && atoms.length > 0) {
+                selectedProvinceIndex = (selectedProvinceIndex + 1) % atoms.length;
+                // Simulate slight live fluctuation on the actual numeric data
+                const node = atoms[selectedProvinceIndex].userData;
+                node.pm25 = Math.max(0, node.pm25 + (Math.random() * 2 - 1));
+                updateDashboardUI(node);
+            }
         }
 
         // Initialize Fetch and Telemetry Loop
-        fetchWeatherData();
-        setInterval(fetchWeatherData, 15000); // Fetch new real data / location every 15s
-        setInterval(updateTelemetry, 1000);   // Simulate live stream every 1s
+        fetchAllProvincesData();
+        setInterval(fetchAllProvincesData, 60000 * 5); // Real fetch every 5 mins
+        setInterval(autoCycleParams, 3000);   // Auto cycle every 3s if idle
+
+        // Main Animation Loop
+        let time = 0;
+        function animate() {
+            requestAnimationFrame(animate);
+            time += 0.002;
+
+            controls.update(); // Only for OrbitControls
+
+            // Add slight bobbing to network
+            networkGroup.position.y = Math.sin(time * 5) * 5;
+            innerCore.rotation.y -= 0.002;
+
+            // Raycasting logic
+            raycaster.setFromCamera(mouse, camera);
+            const intersects = raycaster.intersectObjects(atoms);
+
+            // Reset hover state
+            if (hoveredAtom) {
+                hoveredAtom.scale.setScalar(hoveredAtom.userData.baseScale);
+                hoveredAtom.material.emissiveIntensity = 1;
+                hoveredAtom = null;
+            }
+
+            if (intersects.length > 0) {
+                controls.autoRotate = false; // Stop rotation when hovering
+                hoveredAtom = intersects[0].object;
+                hoveredAtom.scale.setScalar(hoveredAtom.userData.baseScale * 2.2);
+                hoveredAtom.material.emissiveIntensity = 3;
+                document.body.style.cursor = 'pointer';
+
+                if (selectedProvinceIndex !== hoveredAtom.userData.id) {
+                    selectedProvinceIndex = hoveredAtom.userData.id;
+                    updateDashboardUI(hoveredAtom.userData);
+                }
+            } else {
+                controls.autoRotate = true;
+                document.body.style.cursor = 'default';
+            }
+
+            // Animate individual atoms pulsating slightly
+            atoms.forEach(atom => {
+                if (atom !== hoveredAtom) {
+                    const pulse = Math.sin(time * 10 + atom.userData.id) * 0.15;
+                    atom.scale.setScalar(atom.userData.baseScale + pulse);
+                }
+            });
+
+            renderer.render(scene, camera);
+        }
+        animate();
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
 
     </script>
 </body>
