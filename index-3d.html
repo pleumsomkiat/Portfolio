@@ -24,6 +24,7 @@
             border: 1px solid rgba(212, 175, 55, 0.5);
             pointer-events: none;
             backdrop-filter: blur(5px);
+            z-index: 100;
         }
 
         #controls {
@@ -33,6 +34,7 @@
             transform: translateX(-50%);
             display: flex;
             gap: 10px;
+            z-index: 100;
         }
 
         button {
@@ -44,10 +46,12 @@
             border-radius: 20px;
             backdrop-filter: blur(5px);
             transition: all 0.3s;
+            font-weight: bold;
         }
 
         button:hover {
-            background: rgba(212, 175, 55, 0.4);
+            background: rgba(212, 175, 55, 0.6);
+            color: white;
         }
 
         .label {
@@ -63,19 +67,34 @@
             color: #444;
             font-size: 12px;
         }
+
+        #view-label {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            color: #D4AF37;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 5px 15px;
+            border-radius: 4px;
+        }
     </style>
 </head>
 
 <body>
 
     <div id="info">
-        <div style="font-weight: bold; font-size: 1.2rem;">TRAIN VIEW: CNX &rsaquo; PHS</div>
+        <div style="font-weight: bold; font-size: 1.2rem;">KIKI EXPRESS: BIG TRAIN UPGRADE</div>
         <div id="location">กำลังเตรียมการออกเดินรถ...</div>
         <div class="label" id="timestamp">--:--:--</div>
     </div>
 
+    <div id="view-label">FRONT VIEW</div>
+
     <div id="controls">
-        <button onclick="toggleView()">สลับมุมมอง (Drone / Front)</button>
+        <button onclick="toggleView()">สลับมุมมอง (Front / Follow / Drone)</button>
         <button onclick="resetTrip()">เริ่มใหม่</button>
     </div>
 
@@ -148,11 +167,11 @@
         const ambientLight = new THREE.AmbientLight(0x404040, 2);
         scene.add(ambientLight);
 
-        const directionalLight = new THREE.DirectionalLight(0xD4AF37, 2);
-        directionalLight.position.set(100, 200, 100);
-        scene.add(directionalLight);
+        const sunLight = new THREE.DirectionalLight(0xD4AF37, 2);
+        sunLight.position.set(100, 200, 100);
+        scene.add(sunLight);
 
-        // Convert GPS to 3D Space (Scale/Mercator simplified)
+        // Convert GPS to 3D Space
         const scale = 5000;
         const centerLat = 17.5;
         const centerLon = 99.5;
@@ -169,7 +188,7 @@
         const curve = new THREE.CatmullRomCurve3(points);
 
         // Track
-        const tubeGeo = new THREE.TubeGeometry(curve, 200, 0.5, 8, false);
+        const tubeGeo = new THREE.TubeGeometry(curve, 300, 0.8, 8, false);
         const tubeMat = new THREE.MeshPhongMaterial({ color: 0x222222 });
         const track = new THREE.Mesh(tubeGeo, tubeMat);
         scene.add(track);
@@ -178,37 +197,87 @@
         const grid = new THREE.GridHelper(20000, 100, 0x111111, 0x111111);
         scene.add(grid);
 
-        // Train Model (Kiki Special)
+        // Train Model Logic
         const trainGroup = new THREE.Group();
-        const bodyGeo = new THREE.BoxGeometry(2, 2, 6);
-        const bodyMat = new THREE.MeshPhongMaterial({ color: 0xD4AF37 });
-        const body = new THREE.Mesh(bodyGeo, bodyMat);
-        trainGroup.add(body);
 
-        const headGeo = new THREE.BoxGeometry(2.1, 1.5, 1);
-        const headMat = new THREE.MeshPhongMaterial({ color: 0x1a1a1a });
-        const head = new THREE.Mesh(headGeo, headMat);
-        head.position.z = 3.5;
-        trainGroup.add(head);
+        function createCarriage(color, offsetZ, isEngine = false) {
+            const carriage = new THREE.Group();
+            const bodyGeo = new THREE.BoxGeometry(4, 4, 10); // Big Train size
+            const bodyMat = new THREE.MeshPhongMaterial({ color: color });
+            const body = new THREE.Mesh(bodyGeo, bodyMat);
+            carriage.add(body);
 
-        // Windows / Lights
-        const lightGeo = new THREE.CircleGeometry(0.3, 16);
-        const lightMat = new THREE.MeshBasicMaterial({ color: 0xffff00 });
-        const leftEye = new THREE.Mesh(lightGeo, lightMat);
-        leftEye.position.set(-0.6, 0, 4.01);
-        trainGroup.add(leftEye);
-        const rightEye = leftEye.clone();
-        rightEye.position.x = 0.6;
-        trainGroup.add(rightEye);
+            if (isEngine) {
+                // Engine detailing
+                const headGeo = new THREE.BoxGeometry(4.2, 3, 2);
+                const headMat = new THREE.MeshPhongMaterial({ color: 0x111111 });
+                const head = new THREE.Mesh(headGeo, headMat);
+                head.position.z = 6;
+                carriage.add(head);
 
+                const lightGeo = new THREE.CircleGeometry(0.7, 16);
+                const lightMat = new THREE.MeshBasicMaterial({ color: 0xffff00 });
+                const leftEye = new THREE.Mesh(lightGeo, lightMat);
+                leftEye.position.set(-1.2, 0, 7.01);
+                carriage.add(leftEye);
+                const rightEye = leftEye.clone();
+                rightEye.position.x = 1.2;
+                carriage.add(rightEye);
+
+                const cabinGeo = new THREE.PlaneGeometry(3.5, 1.5);
+                const cabinMat = new THREE.MeshBasicMaterial({ color: 0x33aaff, side: THREE.DoubleSide });
+                const window = new THREE.Mesh(cabinGeo, cabinMat);
+                window.position.set(0, 2.2, 6.01);
+                carriage.add(window);
+
+                // Roof detailing
+                const roofGeo = new THREE.BoxGeometry(3, 0.5, 6);
+                const roof = new THREE.Mesh(roofGeo, new THREE.MeshPhongMaterial({ color: 0x333333 }));
+                roof.position.y = 2.2;
+                carriage.add(roof);
+            } else {
+                // Passenger windows
+                for (let i = -4; i <= 4; i += 2.5) {
+                    const winGeo = new THREE.PlaneGeometry(1.2, 1.5);
+                    const winMat = new THREE.MeshBasicMaterial({ color: 0x33aaff });
+                    const wLeft = new THREE.Mesh(winGeo, winMat);
+                    wLeft.position.set(-2.01, 0.5, i);
+                    wLeft.rotation.y = -Math.PI / 2;
+                    carriage.add(wLeft);
+                    const wRight = wLeft.clone();
+                    wRight.position.x = 2.01;
+                    wRight.rotation.y = Math.PI / 2;
+                    carriage.add(wRight);
+                }
+            }
+
+            carriage.position.z = offsetZ;
+            return carriage;
+        }
+
+        // Assembly: Engine + 4 Carriages
+        const trainVisuals = new THREE.Group();
+        trainVisuals.add(createCarriage(0xD4AF37, 0, true)); // Engine
+        trainVisuals.add(createCarriage(0x1a1a1a, -11));    // Carriage 1
+        trainVisuals.add(createCarriage(0x1a1a1a, -22));    // Carriage 2
+        trainVisuals.add(createCarriage(0x1a1a1a, -33));    // Carriage 3
+        trainVisuals.add(createCarriage(0xD4AF37, -44));    // Tail
+
+        trainGroup.add(trainVisuals);
         scene.add(trainGroup);
 
         // Animation variables
         let progress = 0;
-        const speed = 0.0002;
-        let isFrontView = true;
+        const speed = 0.00012; // Adjusted for big train
+        let viewMode = 0; // 0: FRONT, 1: FOLLOW, 2: DRONE
+        const modes = ["FRONT VIEW", "FOLLOW VIEW (3RD PERSON)", "DRONE VIEW"];
 
-        window.toggleView = () => { isFrontView = !isFrontView; };
+        window.toggleView = () => {
+            viewMode = (viewMode + 1) % 3;
+            document.getElementById('view-label').innerText = modes[viewMode];
+            if (viewMode === 2) controls.enabled = true;
+            else controls.enabled = false;
+        };
         window.resetTrip = () => { progress = 0; };
 
         function updateKikiInfo(index) {
@@ -231,19 +300,23 @@
 
             updateKikiInfo(progress);
 
-            if (isFrontView) {
-                // Front View Camera
-                const camOffset = new THREE.Vector3(0, 1.2, 3.8);
+            if (viewMode === 0) {
+                // FRONT VIEW (Driver)
+                const camOffset = new THREE.Vector3(0, 2, 7);
                 camOffset.applyQuaternion(trainGroup.quaternion);
                 camera.position.copy(pos).add(camOffset);
 
-                const camLookAt = new THREE.Vector3(0, 1, 10);
+                const camLookAt = new THREE.Vector3(0, 1.5, 20);
                 camLookAt.applyQuaternion(trainGroup.quaternion);
                 camera.lookAt(pos.clone().add(camLookAt));
-                controls.enabled = false;
+            } else if (viewMode === 1) {
+                // FOLLOW VIEW (3rd Person)
+                const camOffset = new THREE.Vector3(0, 15, -60);
+                camOffset.applyQuaternion(trainGroup.quaternion);
+                camera.position.copy(pos).add(camOffset);
+                camera.lookAt(trainGroup.position.clone().add(new THREE.Vector3(0, 5, 0)));
             } else {
-                // Drone View
-                controls.enabled = true;
+                // DRONE VIEW
                 controls.update();
             }
 
