@@ -365,26 +365,38 @@
             transport: http()
         });
 
-        // Simplified ABI for FloodBoy001 (Store Contract)
+        // Optimized ABI for FloodBoy001 (CatLabSecureSensorStore)
         const ABI = [
-            { "inputs": [], "name": "getLatestRecord", "outputs": [{ "internalType": "uint256[]", "name": "", "type": "uint256[]" }], "stateMutability": "view", "type": "function" },
-            { "inputs": [], "name": "getSensorId", "outputs": [{ "internalType": "string", "name": "", "type": "string" }], "stateMutability": "view", "type": "function" }
+            {
+                "name": "getLatestRecord",
+                "inputs": [{ "name": "sensor", "type": "address" }],
+                "outputs": [
+                    { "name": "timestamp", "type": "uint256" },
+                    { "name": "values", "type": "int256[]" }
+                ],
+                "stateMutability": "view",
+                "type": "function"
+            }
         ];
+
+        const SENSOR_ADDRESS = '0xcB0e58b011924e049ce4b4D62298Edf43dFF0BDd';
 
         async function updateBlockchainData() {
             try {
-                // Fetch latest data from contract
-                const data = await client.readContract({
+                // Fetch latest data from contract using the Universal Signer address
+                const result = await client.readContract({
                     address: CONTRACT_ADDRESS,
                     abi: ABI,
                     functionName: 'getLatestRecord',
+                    args: [SENSOR_ADDRESS]
                 });
 
-                if (data && data.length >= 10) {
-                    const voltage = Number(data[0]) / 100;
-                    const height = Number(data[3]) / 10000;
-                    const depth = Number(data[6]) / 10000;
-                    const samples = Number(data[9]);
+                if (result && result.length >= 2) {
+                    const values = result[1];
+                    const voltage = Number(values[0]) / 100;
+                    const height = Number(values[3]) / 10000;
+                    const depth = Number(values[6]) / 10000;
+                    const samples = Number(values[9]);
 
                     document.getElementById('val-volt').innerText = voltage.toFixed(2);
                     document.getElementById('val-height').innerText = height.toFixed(4);
@@ -397,13 +409,13 @@
                     // Update Chart
                     updateChart(depth);
 
-                    // Add to table (simulated block history for data visualization)
+                    // Add to table
                     const blockNumber = await client.getBlockNumber();
                     addTableRow(blockNumber.toString(), depth.toFixed(4), voltage.toFixed(2));
                 }
             } catch (err) {
                 console.error("Blockchain Error:", err);
-                document.getElementById('chain-status-text').innerText = 'LINK ERROR';
+                document.getElementById('chain-status-text').innerText = 'LINK ERROR: RECORD NOT FOUND';
                 document.getElementById('chain-status-dot').style.backgroundColor = '#ff0000';
             }
         }
