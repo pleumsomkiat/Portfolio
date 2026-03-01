@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ORACLE CORE: Blockchain Flood Monitor</title>
+    <style>
+        :root {
+            --primary-glow: #00f3ff;
+            --secondary-glow: #0044aa;
+            --error-glow: #ff3300;
+            --bg-dark: #030303;
+            --panel-bg: rgba(5, 12, 20, 0.7);
+        }
+
+        body {
+            margin: 0;
+            overflow: hidden;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-dark);
+            color: #fff;
+        }
+
+        /* 3D Canvas Background */
+        #canvas-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+
+        /* UI Overlay */
+        #ui-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 10;
+            pointer-events: none;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 30px;
+            box-sizing: border-box;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            pointer-events: all;
+        }
+
+        .title-box {
+            background: rgba(10, 20, 30, 0.6);
+            border-left: 4px solid var(--primary-glow);
+            padding: 15px 25px;
+            backdrop-filter: blur(10px);
+            border-radius: 0 10px 10px 0;
+            box-shadow: 0 4px 30px rgba(0, 243, 255, 0.2);
+        }
+
+        h1 {
+            margin: 0;
+            font-size: 2rem;
+            font-weight: 300;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        h1 span {
+            font-weight: 900;
+            color: var(--primary-glow);
+        }
+
+        .subtitle {
+            font-size: 0.9rem;
+            color: #88acc2;
+            margin-top: 5px;
+            letter-spacing: 1px;
+        }
+
+        .status-box {
+            background: rgba(10, 20, 30, 0.6);
+            padding: 10px 20px;
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border: 1px solid rgba(0, 243, 255, 0.3);
+        }
+
+        .pulse-dot {
+            width: 10px;
+            height: 10px;
+            background-color: #00ff00;
+            border-radius: 50%;
+            box-shadow: 0 0 10px #00ff00;
+            animation: pulse-green 1.5s infinite;
+        }
+
+        @keyframes pulse-green {
+            0% {
+                box-shadow: 0 0 0 0 rgba(0, 255, 0, 0.7);
+            }
+
+            70% {
+                box-shadow: 0 0 0 10px rgba(0, 255, 0, 0);
+            }
+
+            100% {
+                box-shadow: 0 0 0 0 rgba(0, 255, 0, 0);
+            }
+        }
+
+        /* Metrics Grid */
+        main {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+            pointer-events: all;
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+        }
+
+        .metric-card {
+            background: var(--panel-bg);
+            border: 1px solid rgba(0, 243, 255, 0.2);
+            backdrop-filter: blur(12px);
+            border-radius: 12px;
+            padding: 25px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            transition: transform 0.3s ease, border-color 0.3s ease;
+        }
+
+        .metric-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--primary-glow);
+        }
+
+        .metric-card::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 4px;
+            height: 100%;
+            background: var(--primary-glow);
+        }
+
+        .metric-label {
+            font-size: 0.8rem;
+            color: #88acc2;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 10px;
+        }
+
+        .metric-value {
+            font-size: 3rem;
+            font-weight: 700;
+            color: #fff;
+            text-shadow: 0 0 20px rgba(0, 243, 255, 0.4);
+        }
+
+        .metric-unit {
+            font-size: 1.2rem;
+            color: #5a7d94;
+            margin-left: 5px;
+        }
+
+        /* Chart Section */
+        .telemetry-box {
+            background: var(--panel-bg);
+            border: 1px solid rgba(0, 243, 255, 0.2);
+            backdrop-filter: blur(12px);
+            border-radius: 12px;
+            padding: 20px;
+            height: 300px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        }
+
+        .table-container {
+            margin-top: 20px;
+            max-height: 200px;
+            overflow-y: auto;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            pointer-events: all;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+        }
+
+        th {
+            text-align: left;
+            padding: 12px;
+            color: var(--primary-glow);
+            border-bottom: 1px solid rgba(0, 243, 255, 0.2);
+            position: sticky;
+            top: 0;
+            background: #0a141e;
+        }
+
+        td {
+            padding: 10px 12px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .tx-hash {
+            font-family: monospace;
+            color: #5a7d94;
+            font-size: 0.75rem;
+        }
+
+        #global-footer {
+            position: fixed;
+            bottom: 15px;
+            right: 30px;
+            color: rgba(255, 255, 255, 0.3);
+            font-size: 11px;
+            letter-spacing: 1px;
+            z-index: 100;
+        }
+
+        /* Mobile Adjustments */
+        @media (max-width: 768px) {
+            #ui-layer {
+                padding: 15px;
+            }
+
+            h1 {
+                font-size: 1.4rem;
+            }
+
+            .metric-value {
+                font-size: 2.2rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div id="canvas-container"></div>
+
+    <div id="ui-layer">
+        <header>
+            <div class="title-box">
+                <h1>Flood<span>Boy</span> Blockchain Dashboard</h1>
+                <div class="subtitle">JIBCHAIN L1 REAL-TIME TELEMETRY</div>
+            </div>
+
+            <div class="status-box">
+                <div class="pulse-dot" id="chain-status-dot"></div>
+                <span id="chain-status-text">CONNECTING TO JIBCHAIN...</span>
+            </div>
+        </header>
+
+        <main>
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <div class="metric-label">Water Depth</div>
+                    <div class="metric-value"><span id="val-depth">--</span><span class="metric-unit">m</span></div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Sensor Voltage</div>
+                    <div class="metric-value"><span id="val-volt">--</span><span class="metric-unit">V</span></div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Installation Height</div>
+                    <div class="metric-value"><span id="val-height">--</span><span class="metric-unit">m</span></div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Total Sample Sets</div>
+                    <div class="metric-value"><span id="val-samples">--</span></div>
+                </div>
+            </div>
+
+            <div class="telemetry-box">
+                <canvas id="floodChart"></canvas>
+            </div>
+
+            <div class="table-container">
+                <table id="record-table">
+                    <thead>
+                        <tr>
+                            <th>Block</th>
+                            <th>Depth (m)</th>
+                            <th>Voltage (V)</th>
+                            <th>Transaction Hash Reference</th>
+                        </tr>
+                    </thead>
+                    <tbody id="record-body">
+                        <!-- Data injected here -->
+                    </tbody>
+                </table>
+            </div>
+        </main>
+
+        <div id="global-footer">ENGINEERED BY PLEUMSOMKIAT | ORACLE CORE SYSTEM | JIBCHAIN NODE 8899</div>
+    </div>
+
+    <!-- Libraries -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+                "viem": "https://esm.sh/viem"
+            }
+        }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { createPublicClient, http } from 'viem';
+
+        // --- 1. THREE.JS GRID BACKGROUND ---
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.getElementById('canvas-container').appendChild(renderer.domElement);
+
+        const grid = new THREE.GridHelper(100, 50, 0x00f3ff, 0x001122);
+        grid.position.y = -10;
+        scene.add(grid);
+
+        camera.position.set(0, 15, 30);
+        camera.lookAt(0, 0, 0);
+
+        function animateBg() {
+            requestAnimationFrame(animateBg);
+            grid.rotation.y += 0.001;
+            renderer.render(scene, camera);
+        }
+        animateBg();
+
+        // --- 2. BLOCKCHAIN CONNECTION (VIEM) ---
+        const CONTRACT_ADDRESS = '0xCd3Ec17ddFDa24f8F97131fa0FDf20e7cbd1A8Bb';
+        const client = createPublicClient({
+            chain: {
+                id: 8899,
+                name: 'JIBCHAIN L1',
+                nativeCurrency: { name: 'JIB', symbol: 'JIB', decimals: 18 },
+                rpcUrls: { default: { http: ['https://rpc-l1.jibchain.net'] }, public: { http: ['https://rpc-l1.jibchain.net'] } }
+            },
+            transport: http()
+        });
+
+        // Simplified ABI for FloodBoy001 (Store Contract)
+        const ABI = [
+            { "inputs": [], "name": "getLatestReading", "outputs": [{ "internalType": "uint256[]", "name": "", "type": "uint256[]" }], "stateMutability": "view", "type": "function" },
+            { "inputs": [], "name": "getSensorId", "outputs": [{ "internalType": "string", "name": "", "type": "string" }], "stateMutability": "view", "type": "function" }
+        ];
+
+        async function updateBlockchainData() {
+            try {
+                // Fetch latest data from contract
+                const data = await client.readContract({
+                    address: CONTRACT_ADDRESS,
+                    abi: ABI,
+                    functionName: 'getLatestReading',
+                });
+
+                if (data && data.length >= 10) {
+                    const voltage = Number(data[0]) / 100;
+                    const height = Number(data[3]) / 10000;
+                    const depth = Number(data[6]) / 10000;
+                    const samples = Number(data[9]);
+
+                    document.getElementById('val-volt').innerText = voltage.toFixed(2);
+                    document.getElementById('val-height').innerText = height.toFixed(4);
+                    document.getElementById('val-depth').innerText = depth.toFixed(4);
+                    document.getElementById('val-samples').innerText = samples.toLocaleString();
+
+                    document.getElementById('chain-status-text').innerText = 'JIBCHAIN ACTIVE';
+                    document.getElementById('chain-status-dot').style.backgroundColor = '#00ff00';
+
+                    // Update Chart
+                    updateChart(depth);
+
+                    // Add to table (simulated block history for data visualization)
+                    const blockNumber = await client.getBlockNumber();
+                    addTableRow(blockNumber.toString(), depth.toFixed(4), voltage.toFixed(2));
+                }
+            } catch (err) {
+                console.error("Blockchain Error:", err);
+                document.getElementById('chain-status-text').innerText = 'LINK ERROR';
+                document.getElementById('chain-status-dot').style.backgroundColor = '#ff0000';
+            }
+        }
+
+        // --- 3. CHART SETUP ---
+        const ctx = document.getElementById('floodChart').getContext('2d');
+        const floodChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: [{
+                    label: 'Water Depth (m)',
+                    data: [],
+                    borderColor: '#00f3ff',
+                    backgroundColor: 'rgba(0, 243, 255, 0.1)',
+                    fill: true,
+                    tension: 0.4,
+                    borderWidth: 2,
+                    pointRadius: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: { ticks: { display: false }, grid: { color: 'rgba(255,255,255,0.05)' } },
+                    y: { grid: { color: 'rgba(255,255,255,0.05)' }, beginAtZero: false }
+                },
+                plugins: { legend: { display: false } }
+            }
+        });
+
+        function updateChart(val) {
+            const time = new Date().toLocaleTimeString();
+            floodChart.data.labels.push(time);
+            floodChart.data.datasets[0].data.push(val);
+            if (floodChart.data.labels.length > 30) {
+                floodChart.data.labels.shift();
+                floodChart.data.datasets[0].data.shift();
+            }
+            floodChart.update('none');
+        }
+
+        function addTableRow(block, depth, volt) {
+            const body = document.getElementById('record-body');
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${block}</td>
+                <td>${depth}</td>
+                <td>${volt}</td>
+                <td class="tx-hash">0x8899...${Math.random().toString(16).substring(2, 10)}</td>
+            `;
+            body.prepend(row);
+            if (body.children.length > 8) body.lastElementChild.remove();
+        }
+
+        // Initial fetch and loop
+        updateBlockchainData();
+        setInterval(updateBlockchainData, 5000); // Update every 5s
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    </script>
+</body>
+
+</html>
