@@ -367,7 +367,7 @@
 
         // Simplified ABI for FloodBoy001 (Store Contract)
         const ABI = [
-            { "inputs": [], "name": "getLatestReading", "outputs": [{ "internalType": "uint256[]", "name": "", "type": "uint256[]" }], "stateMutability": "view", "type": "function" },
+            { "inputs": [], "name": "getLatestRecord", "outputs": [{ "internalType": "uint256[]", "name": "", "type": "uint256[]" }], "stateMutability": "view", "type": "function" },
             { "inputs": [], "name": "getSensorId", "outputs": [{ "internalType": "string", "name": "", "type": "string" }], "stateMutability": "view", "type": "function" }
         ];
 
@@ -377,7 +377,7 @@
                 const data = await client.readContract({
                     address: CONTRACT_ADDRESS,
                     abi: ABI,
-                    functionName: 'getLatestReading',
+                    functionName: 'getLatestRecord',
                 });
 
                 if (data && data.length >= 10) {
