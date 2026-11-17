@@ -1,0 +1,32 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+
+# Node / Next.js
+frontend/node_modules/
+frontend/.next/
+.npm-cache/
+.runtime/
+
+# Local configuration and generated audio
+backend/.env
+frontend/.env.local
+backend/storage/audio/*
+!backend/storage/audio/.gitkeep
+
+# Native build output
+robot_bridge/build/
+
+# Local tools and private certificates
+tmp/
+.vscode/
+*.tsbuildinfo
+*.pem
+*.key
+*.pfx
+*.p12
+.env
+.env.*
+!.env.example

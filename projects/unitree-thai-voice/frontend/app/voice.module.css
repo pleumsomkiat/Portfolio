@@ -1,0 +1,427 @@
+﻿.page {
+  min-height: 100dvh;
+  display: grid;
+  place-items: center;
+  padding: 28px;
+  color: #eaf2ff;
+  background: radial-gradient(ellipse at 70% 30%, #11213b55, transparent 52%), #050b15;
+  font-family: "Segoe UI", "Leelawadee UI", Tahoma, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+.console {
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  grid-template-rows: 92px minmax(0, 1fr);
+  width: min(1440px, 100%);
+  height: min(850px, calc(100dvh - 56px));
+  min-height: min(620px, calc(100dvh - 56px));
+  overflow: hidden;
+  border: 1px solid #96aac1;
+  border-radius: 30px;
+  background: linear-gradient(145deg, #0b1728 0%, #060e1a 42%, #091321 100%);
+  box-shadow: 0 0 0 3px #26364b, inset 0 1px 1px #e3efff99, 0 24px 80px #0007;
+}
+
+.console::after {
+  content: "";
+  position: absolute;
+  left: 30px;
+  bottom: 10px;
+  width: 37px;
+  height: 6px;
+  background: repeating-linear-gradient(120deg, #536b87 0 5px, transparent 5px 10px);
+  opacity: .8;
+  pointer-events: none;
+}
+
+.topbar {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  padding: 0 38px;
+  border-bottom: 1px solid #23446e;
+  background: linear-gradient(100deg, #101d30cc, #09132333);
+}
+
+.topbar::after {
+  position: absolute;
+  content: "";
+  bottom: -1px;
+  left: 30px;
+  width: 62%;
+  height: 2px;
+  background: linear-gradient(90deg, #3177ff, #235bc6aa, transparent);
+  box-shadow: 0 2px 12px #286bff30;
+}
+
+.brand { display: flex; align-items: center; gap: 26px; min-width: 0; }
+.brand h1 { margin: 0; color: #f3f6fc; font-size: clamp(25px, 2.6vw, 36px); font-weight: 800; line-height: 1; letter-spacing: -.045em; white-space: nowrap; }
+.brand h1 span { margin-left: 5px; }
+.brand p { margin: 0; color: #849ec1; font-size: clamp(10px, 1.2vw, 16px); font-weight: 600; letter-spacing: .11em; white-space: nowrap; }
+.brandDivider { align-self: stretch; width: 1px; min-height: 35px; background: #486080; }
+
+.vent {
+  position: absolute;
+  right: 0;
+  top: 0;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 5px;
+  width: 146px;
+  height: 40px;
+  padding-right: 30px;
+  background: linear-gradient(155deg, #f2f6ff, #77899f 63%, #becbdd);
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 35% 100%);
+  box-shadow: inset 0 -2px 2px #172a48;
+}
+.vent i { display: block; width: 5px; height: 14px; transform: skewX(-34deg); background: #13263e; box-shadow: 1px 0 0 #eef5ff8c; }
+
+.content {
+  display: grid;
+  grid-template-columns: minmax(0, 1.75fr) minmax(280px, 1fr);
+  gap: 24px;
+  padding: 26px 24px 32px;
+  min-height: 0;
+}
+
+.chatPanel {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  border: 1px solid #7895b9;
+  border-radius: 23px;
+  background: linear-gradient(140deg, #0c1829b3, #07101e99);
+  box-shadow: inset 0 1px 0 #c2daf324;
+}
+
+.chatHeader {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+  height: 72px;
+  padding: 0 27px;
+  border-bottom: 1px solid #314964;
+  background: linear-gradient(115deg, #12223999, #0c172680);
+}
+.chatHeader::after { content: ""; position: absolute; left: 26px; bottom: -3px; width: 48px; height: 5px; background: #2c72ff; clip-path: polygon(9% 0,100% 0,91% 100%,0 100%); box-shadow: 0 0 12px #1d62ff; }
+.chatHeader h2 { margin: 0; color: #f1f5fd; font-size: 25px; font-weight: 600; letter-spacing: -.025em; }
+.chatMark { display: flex; gap: 4px; opacity: .55; }
+.chatMark i { display: block; width: 4px; height: 10px; background: #49698f; transform: skewX(-30deg); }
+
+.messages {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 25px;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 29px 26px 24px;
+  scrollbar-width: thin;
+  scrollbar-color: #334c70 transparent;
+}
+
+.empty {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 220px;
+  padding: 20px 0;
+  text-align: center;
+}
+.emptyAvatar { width: 82px; height: 82px; border: 1px solid #44648c; border-radius: 24px; background: url('/images/g1-portrait.png') 50% 5% / 220% auto no-repeat, radial-gradient(circle at 50% 25%, #284768, #0d1d31); box-shadow: 0 8px 32px #01071099, inset 0 1px 1px #b9d8ff44; }
+.empty h3 { margin: 22px 0 7px; color: #bdcde3; font-size: 20px; font-weight: 500; }
+.empty p { margin: 0; color: #748aa8; font-size: 14px; line-height: 1.8; }
+
+.messageRow { display: flex; align-items: flex-start; gap: 13px; flex-shrink: 0; min-width: 0; }
+.userRow { justify-content: flex-end; padding-left: 48px; }
+.aiRow { padding-right: 12px; }
+.messageContent { max-width: min(100%, 600px); min-width: 0; }
+.userRow .messageContent { max-width: 88%; }
+.avatar { display: block; flex: 0 0 43px; width: 43px; height: 45px; border: 1px solid #92b1d2; border-radius: 14px; background: url('/images/g1-portrait.png') 50% 5% / 225% auto no-repeat, linear-gradient(145deg, #29415f, #122038); box-shadow: inset 0 1px 0 #e0eaff44; }
+.userMessage, .aiMessage { border-radius: 18px; padding: 13px 19px; overflow-wrap: anywhere; box-shadow: 0 5px 12px #00000018; }
+.userMessage { color: #fff; background: linear-gradient(135deg, #2c78ff, #1f5ced); border: 1px solid #4b8aff66; border-bottom-right-radius: 7px; }
+.aiMessage { color: #eef4fc; background: linear-gradient(135deg, #21334a, #1a2b40); border: 1px solid #3b526b; border-top-left-radius: 7px; }
+.userMessage p, .aiMessage p { margin: 0; line-height: 1.8; font-size: 16px; white-space: pre-wrap; }
+
+.replay { display: inline-flex; align-items: center; align-self: flex-start; gap: 9px; min-width: 0; margin-top: 11px; padding: 2px 0; border: none; border-radius: 5px; color: #88a8d2; background: transparent; font-size: 13px; font-weight: 400; line-height: 1.6; cursor: pointer; text-align: left; }
+.replay svg { flex-shrink: 0; width: 23px; height: 23px; stroke: currentColor; stroke-width: 1.5; }
+.replay:hover:not(:disabled) { color: #c6ddff; }
+.replay:disabled { opacity: .4; cursor: default; }
+
+.activity { display: flex; align-items: flex-start; gap: 13px; flex-shrink: 0; }
+.activityBubble { display: flex; align-items: center; gap: 12px; min-height: 45px; padding: 11px 17px; border: 1px solid #304762; border-radius: 7px 17px 17px; background: #142339; color: #9fb4d0; font-size: 13px; }
+.dots { display: inline-flex; gap: 4px; }
+.dots i { width: 4px; height: 4px; border-radius: 50%; background: #7cafff; animation: dotPulse 1.3s infinite; }
+.dots i:nth-child(2) { animation-delay: .15s; }
+.dots i:nth-child(3) { animation-delay: .3s; }
+
+.voicePanel {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  border: 1px solid #829ebf;
+  border-radius: 23px;
+  background: radial-gradient(ellipse at 50% 18%, #28415e55, transparent 58%), linear-gradient(155deg, #0d1b2e, #070f1c 78%);
+  box-shadow: inset 0 1px 0 #dbeaff33, inset 0 -3px 0 #2c70ff99;
+}
+.voicePanel::before { position: absolute; z-index: 3; content: ""; pointer-events: none; bottom: -1px; left: 0; width: 100%; height: 42px; background: linear-gradient(165deg, #c5d2e3, #657a95 47%, #b3c2d6); clip-path: polygon(0 0, 12% 96%, 88% 96%, 100% 0, 100% 100%, 0 100%); }
+.voicePanel::after { position: absolute; z-index: -1; content: ""; inset: 32% 0 0; pointer-events: none; background: linear-gradient(transparent, #081222cc 55%, #091324); }
+.panelTrace { position: absolute; z-index: -1; inset: 0; width: 100%; height: 100%; fill: none; stroke: #345b8d; stroke-width: 1; opacity: .55; pointer-events: none; }
+.robotPortrait { position: absolute; z-index: -2; top: 2%; left: -2%; width: 104%; height: 64%; object-fit: contain; object-position: 50% 0; opacity: .75; filter: saturate(.73); pointer-events: none; }
+.voiceControls { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; width: 100%; padding: 26px 20px 39px; gap: 29px; }
+.micRing { position: relative; display: grid; place-items: center; width: clamp(182px, 20vw, 254px); aspect-ratio: 1; padding: 14px; border: 1px solid #446b9e; border-radius: 50%; background: radial-gradient(circle at 50% 30%, #152b4777, #0b182cbb); box-shadow: 0 0 30px #07132344; }
+.micRing::after { content: ""; position: absolute; inset: 12px; border: 4px solid #2c70ff; border-radius: 50%; box-shadow: 0 0 17px #1c5cff33; pointer-events: none; }
+.micButton { position: relative; display: flex; align-items: center; justify-content: center; align-self: center; width: 100%; height: 100%; min-width: 0; padding: 0; border: 0; border-radius: 50%; color: #edf5ff; background: radial-gradient(circle at 45% 22%, #192e49, #0b172a 75%); cursor: pointer; transition: background .2s, box-shadow .2s, color .2s; -webkit-tap-highlight-color: transparent; }
+.micButton svg { width: 38%; height: 38%; filter: drop-shadow(0 2px 8px #0003); }
+.micButton:hover:not(:disabled) { color: #fff; background: radial-gradient(circle at 45% 22%, #244873, #102541 75%); box-shadow: inset 0 0 30px #347bff22; }
+.micButton:disabled { opacity: .6; cursor: wait; }
+.micButton.active { color: #fff; background: radial-gradient(circle at 45% 22%, #295397, #123268 80%); }
+.listening { animation: micPulse 1.8s ease-in-out infinite; }
+.listening::after { border-color: #6ba5ff; box-shadow: 0 0 22px #4285ff55; }
+.speaking .micRing::after { box-shadow: 0 0 22px #4285ff44; }
+.voiceStatus { display: flex; align-items: flex-start; justify-content: center; gap: 9px; min-height: 42px; max-width: 280px; }
+.status { min-height: 0; margin: 0; color: #9fb7d7; font-size: 13px; font-weight: 400; line-height: 1.7; text-align: center; overflow-wrap: anywhere; }
+.statusLight { display: block; flex-shrink: 0; width: 5px; height: 5px; margin-top: 9px; border-radius: 50%; background: #627d9f; }
+.statusLight.lit { background: #6eaaff; box-shadow: 0 0 9px #468dff; }
+.srOnly { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+.micSettings { color: #a9cdfd; font-size: 12px; text-decoration: underline; text-underline-offset: 4px; white-space: nowrap; }
+.micSettings:focus-visible { outline: 2px solid #9dc6ff; outline-offset: 5px; }
+.listeningBubble { flex: 1; flex-direction: column; align-items: stretch; min-width: 0; max-width: 320px; gap: 8px; }
+.activityLabel { display: flex; align-items: center; gap: 12px; }
+.inputLabel { margin: 0; color: #c4d7ee; font-size: 12px; line-height: 1.6; overflow-wrap: anywhere; }
+.inputLevel { display: block; width: 100%; height: 12px; accent-color: #70e8bd; }
+.inputError { flex-shrink: 0; padding: 14px 16px; border: 1px solid #a36b59; border-radius: 14px; color: #ffe1d5; background: #35231f; font-size: 14px; line-height: 1.7; overflow-wrap: anywhere; }
+.inputError p { margin: 5px 0 0; }
+.inputError a { color: #c3deff; text-underline-offset: 4px; }
+.inputError a:focus-visible { outline: 2px solid #9dc6ff; outline-offset: 4px; }
+.replay:focus-visible, .micButton:focus-visible { outline: 2px solid #9dc6ff; outline-offset: 5px; }
+
+@keyframes micPulse { 50% { box-shadow: 0 0 0 6px #3984ff0d, 0 0 34px #2775ff1c; } }
+@keyframes dotPulse { 0%, 70%, 100% { opacity: .4; transform: translateY(0); } 35% { opacity: 1; transform: translateY(-3px); } }
+
+@media (min-width: 1500px) { .content { gap: 28px; padding: 28px 27px 34px; } .micRing { width: 270px; } .voiceControls { padding-bottom: 50px; } }
+@media (max-width: 1050px) { .page { padding: 22px; } .console { height: calc(100dvh - 44px); min-height: 600px; grid-template-rows: 82px minmax(0,1fr); } .topbar { padding: 0 26px; } .brand { gap: 18px; } .brand p { letter-spacing: .06em; } .content { grid-template-columns: minmax(0,1.5fr) minmax(260px,1fr); gap: 18px; padding: 20px 18px 28px; } .chatHeader { height: 65px; padding-inline: 22px; } .chatHeader h2 { font-size: 23px; } .messages { padding: 24px 19px; gap: 22px; } .userMessage p,.aiMessage p { font-size: 15px; } .avatar { flex-basis: 37px; width: 37px; height: 40px; border-radius: 12px; } .messageRow,.activity { gap: 10px; } .aiRow { padding-right: 0; } .micRing { width: 204px; } .voiceControls { padding-inline: 16px; gap: 23px; } .vent { width: 100px; height: 32px; padding-right: 20px; } }
+@media (max-width: 760px) {
+  .page { padding: 16px; align-items: start; }
+  .console { height: auto; min-height: calc(100dvh - 32px); grid-template-rows: 82px auto; border-radius: 24px; }
+  .topbar { padding-inline: 22px; }
+  .brand { align-items: flex-start; flex-direction: column; gap: 9px; }
+  .brand h1 { font-size: 26px; }
+  .brand p { font-size: 9px; letter-spacing: .15em; }
+  .brandDivider { display: none; }
+  .content { display: flex; flex-direction: column-reverse; gap: 18px; padding: 18px 16px 28px; }
+  .voicePanel { flex: 0 0 270px; min-height: 270px; border-radius: 19px; }
+  .robotPortrait { top: -5%; left: -4%; width: 55%; height: 112%; opacity: .9; object-position: center; }
+  .voicePanel::after { inset: 0 35% 0 0; background: linear-gradient(90deg, transparent 30%, #091426); }
+  .voiceControls { width: 54%; min-height: 270px; margin-left: auto; justify-content: center; padding: 28px 14px 25px; gap: 19px; }
+  .micRing { width: 156px; padding: 11px; }
+  .micRing::after { inset: 9px; border-width: 3px; }
+  .voiceStatus { min-height: 22px; gap: 7px; }
+  .status { font-size: 12px; }
+  .voicePanel::before { height: 26px; }
+  .chatPanel { height: 480px; min-height: 350px; border-radius: 19px; }
+  .messages { padding: 24px 18px; }
+  .emptyAvatar { width: 68px; height: 68px; border-radius: 20px; }
+  .empty h3 { font-size: 18px; }
+  .empty p { font-size: 12px; }
+}
+@media (max-width: 400px) { .page { padding: 11px; } .console { min-height: calc(100dvh - 22px); } .content { padding-inline: 11px; gap: 14px; } .topbar { padding-inline: 18px; } .brand h1 { font-size: 24px; } .voicePanel { min-height: 235px; flex-basis: 235px; } .voiceControls { min-height: 235px; width: 54%; padding-inline: 10px; gap: 16px; } .micRing { width: 130px; } .status { font-size: 11px; } .chatHeader { height: 60px; padding-inline: 18px; } .chatHeader h2 { font-size: 21px; } .messages { padding: 22px 13px; } .avatar { flex-basis: 31px; width: 31px; height: 34px; border-radius: 10px; } .userMessage,.aiMessage { padding: 10px 13px; } .userMessage p,.aiMessage p { font-size: 14px; } .replay { font-size: 11px; } .empty p { font-size: 11px; } }
+@media (prefers-reduced-motion: reduce) { .dots i,.listening { animation: none; } .micButton { transition: none; } }
+
+/* Portrait phones keep the microphone in reach while the chat scrolls above it. */
+@media (max-width: 760px) and (orientation: portrait) {
+  .page {
+    height: 100dvh;
+    min-height: 0;
+    padding: max(12px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) max(12px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left));
+  }
+  .console { height: 100%; min-height: 0; grid-template-rows: 72px minmax(0, 1fr); }
+  .content { display: grid; grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1fr) 184px; gap: 12px; padding: 12px 12px 24px; }
+  .chatPanel { height: auto; min-height: 0; }
+  .chatHeader { height: 54px; padding-inline: 17px; }
+  .chatHeader h2 { font-size: 21px; }
+  .chatHeader::after { left: 17px; width: 37px; }
+  .messages { padding: 18px 14px; gap: 18px; }
+  .voicePanel { flex: initial; height: auto; min-height: 0; }
+  .robotPortrait { top: -6%; left: -3%; width: 52%; height: 115%; }
+  .voiceControls { width: 54%; min-height: 0; height: 100%; padding: 12px 10px 17px; gap: 9px; }
+  .micRing { width: 126px; padding: 10px; }
+  .micRing::after { inset: 8px; }
+  .voiceStatus { min-height: 20px; max-width: 100%; gap: 6px; }
+  .status { font-size: 11px; line-height: 1.5; }
+  .statusLight { margin-top: 6px; }
+  .empty { min-height: 0; padding: 12px 0; }
+  .emptyAvatar { width: 55px; height: 55px; border-radius: 16px; }
+  .empty h3 { margin-top: 14px; font-size: 17px; }
+  .empty p { font-size: 12px; }
+  .avatar { flex-basis: 32px; width: 32px; height: 35px; border-radius: 10px; }
+  .userRow { padding-left: 20px; }
+  .userRow .messageContent { max-width: 100%; }
+  .userMessage, .aiMessage { padding: 10px 13px; }
+  .userMessage p, .aiMessage p { font-size: 14px; }
+  .replay { min-height: 44px; margin-top: 4px; font-size: 12px; }
+  .activityBubble { min-width: 0; padding: 10px 12px; font-size: 12px; }
+}
+
+/* Short landscape screens use the same two-panel arrangement as desktop. */
+@media (orientation: landscape) and (max-height: 600px) {
+  .page {
+    height: 100dvh;
+    min-height: 0;
+    padding: max(8px, env(safe-area-inset-top)) max(10px, env(safe-area-inset-right)) max(8px, env(safe-area-inset-bottom)) max(10px, env(safe-area-inset-left));
+  }
+  .console { width: min(1440px, 100%); height: 100%; min-height: 0; grid-template-rows: 46px minmax(0, 1fr); border-radius: 19px; }
+  .console::after { left: 20px; bottom: 6px; height: 5px; width: 30px; }
+  .topbar { padding-inline: 20px; }
+  .brand { flex-direction: row; align-items: center; gap: 15px; }
+  .brand h1 { font-size: 22px; }
+  .brand p { font-size: 9px; letter-spacing: .1em; }
+  .brandDivider { display: block; min-height: 23px; }
+  .vent { width: 78px; height: 23px; padding-right: 16px; gap: 4px; }
+  .vent i { width: 4px; height: 10px; }
+  .content { display: grid; grid-template-columns: minmax(0, 1fr) minmax(148px, 30%); grid-template-rows: minmax(0, 1fr); gap: 12px; padding: 10px 12px 18px; }
+  .chatPanel { height: auto; min-height: 0; border-radius: 15px; }
+  .chatHeader { height: 43px; padding-inline: 17px; }
+  .chatHeader h2 { font-size: 19px; }
+  .chatHeader::after { left: 17px; width: 35px; height: 4px; bottom: -2px; }
+  .messages { padding: 16px 14px; gap: 16px; }
+  .avatar { flex-basis: 29px; width: 29px; height: 32px; border-radius: 10px; }
+  .messageRow, .activity { gap: 8px; }
+  .userRow { padding-left: 24px; }
+  .userRow .messageContent { max-width: 100%; }
+  .userMessage, .aiMessage { padding: 9px 12px; border-radius: 13px; }
+  .userMessage p, .aiMessage p { font-size: 14px; line-height: 1.7; }
+  .replay { min-height: 44px; margin-top: 2px; font-size: 12px; }
+  .replay svg { width: 20px; height: 20px; }
+  .empty { min-height: 0; padding: 6px 0; }
+  .emptyAvatar { width: 44px; height: 44px; border-radius: 13px; }
+  .empty h3 { margin: 11px 0 3px; font-size: 16px; }
+  .empty p { font-size: 11px; }
+  .voicePanel { flex: initial; height: auto; min-height: 0; border-radius: 15px; }
+  .voicePanel::before { height: 25px; }
+  .voicePanel::after { inset: 28% 0 0; background: linear-gradient(transparent, #081222cc 55%, #091324); }
+  .robotPortrait { top: -8%; left: -2%; width: 104%; height: 72%; object-position: center top; opacity: .75; }
+  .voiceControls { width: 100%; height: auto; min-height: 0; margin-left: 0; padding: 12px 8px 19px; gap: 9px; }
+  .micRing { width: clamp(100px, 28dvh, 154px); padding: 9px; }
+  .micRing::after { inset: 7px; border-width: 3px; }
+  .voiceStatus { min-height: 18px; max-width: 100%; gap: 6px; }
+  .status { font-size: 11px; line-height: 1.5; }
+  .statusLight { margin-top: 6px; }
+  .activityBubble { min-width: 0; min-height: 40px; padding: 9px 12px; font-size: 12px; }
+}
+@media (orientation: landscape) and (max-height: 600px) and (max-width: 600px) {
+  .brand p, .brandDivider { display: none; }
+}
+@media (max-width: 360px) and (orientation: portrait) {
+  .page { padding: max(8px, env(safe-area-inset-top)) max(8px, env(safe-area-inset-right)) max(8px, env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left)); }
+  .console { grid-template-rows: 66px minmax(0, 1fr); border-radius: 19px; }
+  .topbar { padding-inline: 15px; }
+  .brand h1 { font-size: 23px; }
+  .content { padding: 10px 10px 22px; gap: 10px; grid-template-rows: minmax(0, 1fr) 160px; }
+  .voiceControls { padding: 9px 8px 15px; gap: 7px; }
+  .micRing { width: 108px; padding: 9px; }
+  .status { font-size: 10px; }
+  .chatHeader { height: 48px; padding-inline: 14px; }
+  .chatHeader h2 { font-size: 19px; }
+  .messages { padding: 15px 11px; gap: 14px; }
+  .empty h3 { font-size: 15px; }
+  .empty p { font-size: 11px; }
+}
+
+/* Day mode keeps the blue console details and original robot artwork. */
+:global(html[data-theme="light"]) .page {
+  color: #192d48;
+  background: radial-gradient(ellipse at 70% 30%, #d4e5fb99, transparent 52%), #edf3fa;
+}
+:global(html[data-theme="light"]) .console {
+  border-color: #8ba4c2;
+  background: linear-gradient(145deg, #ffffff, #f1f6fc 58%, #e9f1fb);
+  box-shadow: 0 0 0 3px #c6d5e7, inset 0 1px 1px #fff, 0 24px 80px #24466b24;
+}
+:global(html[data-theme="light"]) .topbar {
+  border-color: #b3cae6;
+  background: linear-gradient(100deg, #e7f0fdcc, #ffffff66);
+}
+:global(html[data-theme="light"]) .brand h1,
+:global(html[data-theme="light"]) .chatHeader h2 { color: #192d48; }
+:global(html[data-theme="light"]) .brand p { color: #526b8a; }
+:global(html[data-theme="light"]) .brandDivider { background: #9bb1cd; }
+:global(html[data-theme="light"]) .chatPanel {
+  border-color: #a4b9d2;
+  background: linear-gradient(140deg, #ffffff, #f6f9fe);
+  box-shadow: inset 0 1px 0 #fff;
+}
+:global(html[data-theme="light"]) .chatHeader {
+  border-color: #c5d5e8;
+  background: linear-gradient(115deg, #eaf2ff, #f6f9fe);
+}
+:global(html[data-theme="light"]) .messages { scrollbar-color: #9fb7d6 transparent; }
+:global(html[data-theme="light"]) .empty h3 { color: #2e4c70; }
+:global(html[data-theme="light"]) .empty p { color: #526780; }
+:global(html[data-theme="light"]) .emptyAvatar { box-shadow: 0 8px 26px #27456b26, inset 0 1px 1px #b9d8ff44; }
+:global(html[data-theme="light"]) .aiMessage {
+  color: #203955;
+  border-color: #bbcee6;
+  background: linear-gradient(135deg, #e8f0fc, #e0ebfa);
+}
+:global(html[data-theme="light"]) .replay { color: #35639b; }
+:global(html[data-theme="light"]) .replay:hover:not(:disabled) { color: #164a91; }
+:global(html[data-theme="light"]) .activityBubble { color: #3e5c80; border-color: #bbcee6; background: #e8f0fc; }
+:global(html[data-theme="light"]) .dots i { background: #286ad2; }
+:global(html[data-theme="light"]) .inputLabel { color: #3e5c80; }
+:global(html[data-theme="light"]) .voicePanel {
+  border-color: #a4b9d2;
+  background: radial-gradient(ellipse at 50% 18%, #b5d0f299, transparent 58%), linear-gradient(155deg, #e5effc, #f3f7fd 78%);
+  box-shadow: inset 0 1px 0 #fff, inset 0 -3px 0 #2c70ff66;
+}
+:global(html[data-theme="light"]) .voicePanel::after { background: linear-gradient(transparent, #edf3facc 55%, #f3f7fd); }
+:global(html[data-theme="light"]) .panelTrace { stroke: #789dc9; }
+:global(html[data-theme="light"]) .robotPortrait { opacity: .95; filter: saturate(.85); }
+:global(html[data-theme="light"]) .micRing {
+  border-color: #91b1d9;
+  background: radial-gradient(circle at 50% 30%, #ffffff99, #c9ddf499);
+  box-shadow: 0 0 30px #6d93c226;
+}
+:global(html[data-theme="light"]) .micButton {
+  color: #245da9;
+  background: radial-gradient(circle at 45% 22%, #fff, #deebfb 75%);
+}
+:global(html[data-theme="light"]) .micButton svg { filter: none; }
+:global(html[data-theme="light"]) .micButton:hover:not(:disabled) {
+  color: #154584;
+  background: radial-gradient(circle at 45% 22%, #fff, #c8defa 75%);
+}
+:global(html[data-theme="light"]) .micButton.active { color: #fff; background: radial-gradient(circle at 45% 22%, #397ae0, #2055a6 80%); }
+:global(html[data-theme="light"]) .status { color: #3f5d80; }
+:global(html[data-theme="light"]) .statusLight { background: #5a769b; }
+:global(html[data-theme="light"]) .statusLight.lit { background: #2468d4; }
+:global(html[data-theme="light"]) .micSettings { color: #215db1; }
+:global(html[data-theme="light"]) .inputError { color: #7d3325; border-color: #d8a392; background: #fff0e9; }
+:global(html[data-theme="light"]) .inputError a { color: #215db1; }
+:global(html[data-theme="light"]) .micSettings:focus-visible,
+:global(html[data-theme="light"]) .replay:focus-visible,
+:global(html[data-theme="light"]) .micButton:focus-visible,
+:global(html[data-theme="light"]) .inputError a:focus-visible { outline-color: #215db1; }
+@media (max-width: 760px) {
+  :global(html[data-theme="light"]) .voicePanel::after { background: linear-gradient(90deg, transparent 30%, #edf3fa); }
+}
+@media (orientation: landscape) and (max-height: 600px) {
+  :global(html[data-theme="light"]) .voicePanel::after { background: linear-gradient(transparent, #edf3facc 55%, #f3f7fd); }
+}

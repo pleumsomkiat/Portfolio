@@ -1,0 +1,24 @@
+.page { width: min(760px, calc(100% - 32px)); margin: 0 auto; padding: 36px 0 48px; line-height: 1.7; }
+.back { color: var(--link, var(--accent)); text-underline-offset: 4px; }
+.header { margin: 28px 0; }
+.header > p:first-child { color: var(--link, var(--accent)); font-size: 12px; letter-spacing: .15em; }
+.header h1 { font-size: clamp(26px, 6vw, 40px); }
+.header > p:last-child { color: var(--muted); }
+.card { display: flex; flex-direction: column; gap: 12px; padding: 26px; margin: 18px 0; border: 1px solid var(--line); border-radius: 18px; background: var(--panel); }
+.card label { font-weight: 600; }
+.card select { width: 100%; min-width: 0; min-height: 46px; padding: 10px; border: 1px solid var(--line); border-radius: 9px; background: var(--surface, var(--panel)); color: var(--ink); font: inherit; }
+.card meter { width: 100%; height: 24px; accent-color: var(--accent); }
+.card button { align-self: flex-start; min-height: 48px; margin-top: 8px; }
+.card button.recording { color: #fff; background: #a22e44; }
+.card a { color: var(--link, var(--accent)); text-underline-offset: 4px; }
+.card h2 { margin: 6px 0 0; font-size: 18px; }
+.hint { margin: 0; color: var(--muted); font-size: 13px; overflow-wrap: anywhere; }
+.status { min-height: 28px; margin: 4px 0 0; color: var(--ink); }
+.transcript { min-height: 54px; padding: 14px; margin: 0; border-radius: 10px; background: var(--surface, var(--panel)); white-space: pre-wrap; overflow-wrap: anywhere; }
+.card select:focus-visible, .card button:focus-visible, .page a:focus-visible { outline: 2px solid var(--focus, var(--accent)); outline-offset: 4px; }
+.themeOptions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.card .themeOption { display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; min-height: 64px; margin: 0; padding: 14px; border: 1px solid var(--line); border-radius: 12px; color: var(--muted); background: var(--surface, var(--panel)); }
+.themeOption svg { width: 24px; height: 24px; flex: 0 0 auto; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.card .themeOption[aria-pressed="true"] { color: var(--link, var(--accent)); border-color: var(--link, var(--accent)); background: color-mix(in srgb, var(--link, var(--accent)) 12%, var(--surface, var(--panel))); box-shadow: inset 0 0 0 1px var(--link, var(--accent)); }
+.themeOption:hover { color: var(--ink); }
+@media (max-width: 480px) { .page { padding-top: 24px; } .card { padding: 18px; } .card button { align-self: stretch; } }
